@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#5b2be0">
+<title>Keanu's Times Table Trek</title>
+<style>
+  :root{
+    --purple:#5b2be0; --purple-dark:#4620ad;
+    --mint:#2fbfa4; --sun:#ffb02e; --coral:#ff5d73;
+    --sky1:#bfe6ff; --sky2:#eaf6ff;
+    --ink:#20233a; --muted:#6b6f8c; --card:#ffffff;
+    --good:#1f9d6b; --bad:#d0433f;
+    --pad:#f1eefe;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; min-height:100%;}
+  body{
+    font-family:"Baloo 2", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 55%, #f6f4ee 100%);
+    -webkit-font-smoothing:antialiased;
+    touch-action:manipulation;
+  }
+  #app{
+    max-width:520px; margin:0 auto; padding:14px 14px 30px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .brand{display:flex; align-items:baseline; gap:7px; font-weight:800;}
+  .brand .k{color:var(--purple); letter-spacing:.5px;}
+  .brand .t{color:var(--muted); font-size:12px; font-weight:700;}
+  .iconbtn{
+    border:0; background:rgba(255,255,255,.7); color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:13px;
+    padding:7px 12px; border-radius:999px; cursor:pointer;
+  }
+  .iconbtn:active{transform:translateY(1px);}
+
+  .trail-wrap{
+    background:linear-gradient(180deg,#d3ecff,#eaf6ff);
+    border-radius:18px; padding:8px 10px 4px;
+    box-shadow:0 4px 14px rgba(80,60,160,.10); position:relative;
+  }
+  .trail-wrap svg{display:block; width:100%; height:auto;}
+  .altlabel{
+    position:absolute; right:14px; top:10px; font-size:12px; font-weight:800;
+    color:var(--purple-dark); background:rgba(255,255,255,.8);
+    padding:2px 8px; border-radius:999px;
+  }
+  #koala{transition:transform .55s cubic-bezier(.34,1.3,.5,1);}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  #koala .body{animation:bob 1.6s ease-in-out infinite;}
+
+  .keanu{display:flex; gap:10px; align-items:flex-start;}
+  .keanu .avatar{
+    flex:0 0 auto; width:52px; height:52px; border-radius:50%;
+    background:#cfd6de; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px rgba(80,60,160,.18); overflow:hidden;
+  }
+  .keanu .avatar svg{width:46px; height:46px;}
+  .bubble{
+    position:relative; background:var(--card); border-radius:16px;
+    padding:11px 14px; box-shadow:0 4px 14px rgba(80,60,160,.12);
+    font-size:16px; line-height:1.35; font-weight:600; flex:1;
+    min-height:44px; display:flex; align-items:center;
+  }
+  .bubble::before{
+    content:""; position:absolute; left:-8px; top:16px;
+    border:8px solid transparent; border-right-color:var(--card); border-left:0;
+  }
+  .bubble.good{color:var(--good);}
+  .bubble.bad{color:var(--bad);}
+
+  .statusrow{display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:13px; font-weight:800; color:var(--muted); min-height:18px;}
+  .pips{display:flex; gap:5px; flex-wrap:wrap; justify-content:center; flex:1;}
+  .pip{width:9px; height:9px; border-radius:50%; background:#d9d5ec;}
+  .pip.on{background:var(--sun);}
+  .streak{color:var(--coral); text-align:right; min-width:64px;}
+  .streak.hot{color:var(--purple);}
+
+  .card{
+    background:var(--card); border-radius:20px; padding:22px 18px;
+    box-shadow:0 8px 24px rgba(80,60,160,.14); text-align:center;
+  }
+  .q{font-size:44px; font-weight:800; letter-spacing:1px;
+    display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
+  .q .eq{color:var(--muted);}
+  .answerbox{
+    margin:14px auto 0; min-width:120px; min-height:56px; padding:6px 16px;
+    border-radius:14px; border:3px dashed #cfc7f0; background:var(--pad);
+    font-size:38px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; color:var(--purple-dark);
+  }
+  .answerbox.filled{border-style:solid;}
+  .answerbox.good{border-color:var(--good); color:var(--good); background:#e9f8f0;}
+  .answerbox.bad{border-color:var(--bad); color:var(--bad); background:#fdeceb;}
+  .hintline{margin-top:12px; font-size:14.5px; font-weight:600; color:var(--purple-dark); min-height:20px;}
+  .hintbtn{
+    margin-top:10px; border:0; background:var(--pad); color:var(--purple-dark);
+    font-family:inherit; font-weight:800; font-size:13px; padding:7px 14px;
+    border-radius:999px; cursor:pointer;
+  }
+
+  .pad{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  .key{
+    border:0; background:var(--card); color:var(--ink);
+    font-family:inherit; font-weight:800; font-size:26px; padding:16px 0;
+    border-radius:16px; cursor:pointer;
+    box-shadow:0 4px 0 #d8d2ef, 0 6px 14px rgba(80,60,160,.10);
+    transition:transform .05s, box-shadow .05s;
+  }
+  .key:active{transform:translateY(3px); box-shadow:0 1px 0 #d8d2ef;}
+  .key.enter{background:var(--purple); color:#fff; box-shadow:0 4px 0 var(--purple-dark), 0 6px 14px rgba(91,43,224,.3);}
+  .key.enter:active{box-shadow:0 1px 0 var(--purple-dark);}
+  .key.clear{background:#fff0f1; color:var(--coral); box-shadow:0 4px 0 #f3d3d7;}
+  .key[disabled]{opacity:.4; pointer-events:none;}
+
+  .panel{
+    background:var(--card); border-radius:22px; padding:22px 20px;
+    box-shadow:0 10px 30px rgba(80,60,160,.16); text-align:center;
+  }
+  .panel h1{font-size:26px; margin:.1em 0; color:var(--purple);}
+  .panel h2{font-size:20px; margin:.2em 0; color:var(--purple);}
+  .panel p{font-size:15px; color:var(--muted); font-weight:600; margin:.5em 0;}
+  .field{margin:14px 0 4px; text-align:left;}
+  .field label{display:block; font-size:13px; font-weight:800; color:var(--muted); margin-bottom:6px;}
+  .field input[type=text]{
+    width:100%; font-family:inherit; font-size:17px; font-weight:700;
+    padding:11px 13px; border-radius:12px; border:2px solid #e2ddf3; background:#faf9ff; color:var(--ink);
+  }
+  .levels{display:grid; grid-template-columns:repeat(5,1fr); gap:7px;}
+  .lvl{
+    border:2px solid #e2ddf3; background:#faf9ff; border-radius:12px; padding:9px 0;
+    font-weight:800; font-size:16px; cursor:pointer; color:var(--muted);
+  }
+  .lvl.sel{border-color:var(--purple); background:var(--pad); color:var(--purple-dark);}
+  .lvldesc{font-size:12.5px; color:var(--muted); font-weight:600; margin-top:7px; min-height:16px;}
+  .bigbtn{
+    margin-top:16px; width:100%; border:0; background:var(--purple); color:#fff;
+    font-family:inherit; font-weight:800; font-size:19px; padding:15px 0;
+    border-radius:16px; cursor:pointer; box-shadow:0 5px 0 var(--purple-dark);
+  }
+  .bigbtn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--purple-dark);}
+  .ghostbtn{
+    margin-top:10px; width:100%; border:2px solid #e2ddf3; background:#fff; color:var(--muted);
+    font-family:inherit; font-weight:800; font-size:15px; padding:11px 0; border-radius:14px; cursor:pointer;
+  }
+
+  .stars{font-size:32px; letter-spacing:5px; color:var(--sun); margin:6px 0; word-break:break-all;}
+  .stars .off{color:#e2ddf3;}
+  .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 4px;}
+  .stat{background:var(--pad); border-radius:14px; padding:10px 8px;}
+  .stat b{display:block; font-size:22px; color:var(--purple-dark);}
+  .stat span{font-size:12px; font-weight:700; color:var(--muted);}
+  .practice{
+    text-align:left; margin-top:12px; font-size:14px; font-weight:700; color:var(--ink);
+    background:#fff8ec; border:1px solid #ffe6bd; border-radius:12px; padding:10px 12px;
+  }
+  .practice ul{margin:6px 0 0; padding-left:18px;}
+
+  #cert{
+    margin-top:14px; border:3px double var(--purple); border-radius:14px;
+    padding:16px 14px; background:linear-gradient(180deg,#fff,#faf8ff);
+  }
+  #cert .ct{font-size:12px; letter-spacing:3px; font-weight:800; color:var(--muted);}
+  #cert .cn{font-size:22px; font-weight:800; color:var(--purple); margin:4px 0;}
+  #cert .cl{font-size:13px; font-weight:700; color:var(--ink);}
+  #cert .cd{font-size:12px; color:var(--muted); margin-top:6px;}
+
+  .hidden{display:none !important;}
+  #confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50;}
+
+  @media (max-width:380px){
+    .q{font-size:38px;} .answerbox{font-size:32px;} .key{font-size:23px; padding:14px 0;}
+  }
+  @media print{
+    body{background:#fff;}
+    #app > *{display:none !important;}
+    #endPanel{display:block !important; box-shadow:none;}
+    #endPanel > *:not(#cert){display:none !important;}
+    #cert{display:block !important; border-color:#333;}
+  }
+</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="k">KEANU</span><span class="t">Times Table Trek</span></div>
+    <button class="iconbtn" id="soundBtn" type="button">Sound: on</button>
+  </div>
+
+  <div class="trail-wrap" id="trailWrap">
+    <div class="altlabel" id="altLabel">0 m</div>
+    <svg viewBox="0 0 320 96" aria-hidden="true">
+      <circle cx="30" cy="22" r="12" fill="#ffd76a"/>
+      <path d="M0 78 Q80 68 160 76 T320 74 L320 96 L0 96 Z" fill="#bfe3a6"/>
+      <path d="M0 78 Q80 68 160 76 T320 74" stroke="#8fce74" stroke-width="2" fill="none"/>
+      <rect x="286" y="40" width="10" height="40" rx="3" fill="#8a5a3c"/>
+      <circle cx="291" cy="32" r="18" fill="#5cb85c"/>
+      <circle cx="278" cy="40" r="12" fill="#6fc46f"/>
+      <circle cx="304" cy="40" r="12" fill="#4fae4f"/>
+      <path d="M70 76 l3 -7 l3 7 z" fill="#8fce74"/>
+      <path d="M150 74 l3 -7 l3 7 z" fill="#8fce74"/>
+      <path d="M220 74 l3 -7 l3 7 z" fill="#8fce74"/>
+      <g id="koala" transform="translate(8,0)">
+        <g class="body">
+          <ellipse cx="10" cy="60" rx="9" ry="8" fill="#aeb8c0"/>
+          <circle cx="4" cy="52" r="4.5" fill="#9aa4ad"/>
+          <circle cx="16" cy="52" r="4.5" fill="#9aa4ad"/>
+          <ellipse cx="10" cy="55" rx="8.5" ry="7.5" fill="#c2ccd3"/>
+          <circle cx="7.5" cy="54" r="1.5" fill="#2b2f33"/>
+          <circle cx="12.5" cy="54" r="1.5" fill="#2b2f33"/>
+          <ellipse cx="10" cy="58" rx="2.6" ry="2" fill="#5b6167"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="keanu">
+    <div class="avatar" aria-hidden="true">
+      <svg viewBox="0 0 64 64">
+        <circle cx="15" cy="20" r="10" fill="#9aa4ad"/>
+        <circle cx="49" cy="20" r="10" fill="#9aa4ad"/>
+        <circle cx="15" cy="20" r="5" fill="#e9c9d1"/>
+        <circle cx="49" cy="20" r="5" fill="#e9c9d1"/>
+        <ellipse cx="32" cy="35" rx="20" ry="18" fill="#b7c0c7"/>
+        <circle cx="24" cy="33" r="3.1" fill="#26292e"/>
+        <circle cx="40" cy="33" r="3.1" fill="#26292e"/>
+        <ellipse cx="32" cy="43" rx="7" ry="5.2" fill="#4b5157"/>
+      </svg>
+    </div>
+    <div class="bubble" id="bubble" aria-live="polite">Loading…</div>
+  </div>
+
+  <div class="statusrow" id="statusRow">
+    <span id="stageLabel">&nbsp;</span>
+    <span class="pips" id="pips"></span>
+    <span class="streak" id="streak">&nbsp;</span>
+  </div>
+
+  <div class="card" id="questionCard">
+    <div class="q"><span id="qA">7</span><span class="eq">×</span><span id="qB">8</span><span class="eq">=</span></div>
+    <div class="answerbox" id="answerBox">&nbsp;</div>
+    <div class="hintline" id="hintLine">&nbsp;</div>
+    <button class="hintbtn" id="hintBtn" type="button">Show a hint</button>
+  </div>
+
+  <div class="pad" id="pad">
+    <button class="key" data-k="1">1</button>
+    <button class="key" data-k="2">2</button>
+    <button class="key" data-k="3">3</button>
+    <button class="key" data-k="4">4</button>
+    <button class="key" data-k="5">5</button>
+    <button class="key" data-k="6">6</button>
+    <button class="key" data-k="7">7</button>
+    <button class="key" data-k="8">8</button>
+    <button class="key" data-k="9">9</button>
+    <button class="key clear" data-k="clear">&#10005;</button>
+    <button class="key" data-k="0">0</button>
+    <button class="key enter" data-k="enter">Go</button>
+  </div>
+
+  <div class="panel" id="startPanel">
+    <h1>Keanu's Times Table Trek</h1>
+    <p>G'day! I'm Keanu. Let's climb the big gum tree and learn your times tables on the way up. Ready, legend?</p>
+    <div class="field">
+      <label for="nameInput">Your first name (just for Keanu &mdash; stays on this device)</label>
+      <input type="text" id="nameInput" autocomplete="off" spellcheck="false" maxlength="16" placeholder="optional">
+    </div>
+    <div class="field">
+      <label>Difficulty</label>
+      <div class="levels" id="levels">
+        <button class="lvl" data-l="1" type="button">1</button>
+        <button class="lvl" data-l="2" type="button">2</button>
+        <button class="lvl" data-l="3" type="button">3</button>
+        <button class="lvl" data-l="4" type="button">4</button>
+        <button class="lvl" data-l="5" type="button">5</button>
+      </div>
+      <div class="lvldesc" id="lvlDesc"></div>
+    </div>
+    <button class="bigbtn" id="startBtn" type="button">Start climbing</button>
+  </div>
+
+  <div class="panel hidden" id="ledgePanel">
+    <h2 id="ledgeTitle">Ledge cleared!</h2>
+    <div class="stars" id="ledgeStars"></div>
+    <p id="ledgeMsg"></p>
+    <button class="bigbtn" id="ledgeBtn" type="button">Keep climbing</button>
+  </div>
+
+  <div class="panel hidden" id="endPanel">
+    <h1 id="endTitle">Summit!</h1>
+    <div class="stars" id="endStars"></div>
+    <p id="endMsg"></p>
+    <div class="statgrid">
+      <div class="stat"><b id="stMastered">0</b><span>facts nailed</span></div>
+      <div class="stat"><b id="stAcc">0%</b><span>first-try accuracy</span></div>
+      <div class="stat"><b id="stAnswered">0</b><span>questions climbed</span></div>
+      <div class="stat"><b id="stTime">0:00</b><span>time on the trail</span></div>
+    </div>
+    <div class="practice hidden" id="practiceBox">
+      <span>Keanu says keep practising these:</span>
+      <ul id="practiceList"></ul>
+    </div>
+    <div id="cert">
+      <div class="ct">KEANU'S TIMES TABLE TREK</div>
+      <div class="cn" id="certName">Champion</div>
+      <div class="cl" id="certLine">reached the summit</div>
+      <div class="cd" id="certDate"></div>
+    </div>
+    <button class="bigbtn" id="againBtn" type="button">Climb again</button>
+    <button class="ghostbtn" id="printBtn" type="button">Print certificate</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(s){ return document.querySelector(s); };
+
+/* ---------------- config ---------------- */
+var LEVELS = {
+  1:{desc:"Tables up to 5. Gentle pace, hint shown every time, short ledges.",
+     maxF:5,  ledges:[[2],[3],[4,5]],                 per:6,  warmup:8,  autoHint:true},
+  2:{desc:"Tables up to 10. Easy ramp, plenty of skip-counting help.",
+     maxF:10, ledges:[[2,3],[4,6],[7,8,9]],           per:7,  warmup:10, autoHint:true},
+  3:{desc:"All tables to 12, focus on the tricky ones (3,4,6,7,8,9,11,12).",
+     maxF:12, ledges:[[3,4],[6,7],[8,9],[11,12]],     per:6,  warmup:10, autoHint:false},
+  4:{desc:"All tables to 12, quicker pace, streaks matter more.",
+     maxF:12, ledges:[[3,4],[6,7],[8,9],[11,12]],     per:7,  warmup:10, autoHint:false},
+  5:{desc:"All tables to 12, five ledges, keep the streak alive.",
+     maxF:12, ledges:[[2,3],[4,6],[7,8],[9,11],[12]], per:7,  warmup:10, autoHint:false}
+};
+var PRAISE = ["Beauty!","Nice one!","You little ripper!","Too easy for ya!","Spot on, mate!",
+              "Cracking!","Get up there!","Solid.","Yes! Keep going.","Good as gold."];
+var STREAK = {3:"Three straight — you're on fire!",5:"Five in a row! Absolute legend.",
+              8:"Eight without a slip. Unreal.",12:"Twelve straight?! Keanu's speechless."};
+var WRONG  = ["Not quite — have a squiz at this.","Close! Let's count it out.",
+              "No worries, let's work it through.","Almost. Here's the trick."];
+var LS = {name:"ttt.name", level:"ttt.level", sound:"ttt.sound", hist:"ttt.hist"};
+
+/* ---------------- storage ---------------- */
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- sound ---------------- */
+var Sfx = (function(){
+  var ctx=null, on=true;
+  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ ctx=null; } } return ctx; }
+  function tone(freq,start,dur,type,vol){
+    var a=ac(); if(!a) return;
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.value=freq; o.connect(g); g.connect(a.destination);
+    var t=a.currentTime+start;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.18,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+  return {
+    set:function(v){ on=v; },
+    resume:function(){ var a=ac(); if(a&&a.state==="suspended") a.resume(); },
+    correct:function(){ if(!on) return; tone(660,0,.12,"triangle"); tone(880,.09,.14,"triangle"); },
+    wrong:function(){ if(!on) return; tone(240,0,.18,"sine",.14); },
+    type:function(){ if(!on) return; tone(520,0,.04,"square",.05); },
+    ledge:function(){ if(!on) return; [523,659,784,1046].forEach(function(f,i){ tone(f,i*.09,.16,"triangle"); }); },
+    win:function(){ if(!on) return; [523,659,784,1046,1318].forEach(function(f,i){ tone(f,i*.12,.28,"triangle",.2); }); }
+  };
+})();
+
+/* ---------------- confetti ---------------- */
+var Confetti = (function(){
+  var cv=$("#confetti"), cx=cv.getContext("2d"), parts=[], raf=0, dpr=1;
+  var COLORS=["#5b2be0","#2fbfa4","#ffb02e","#ff5d73","#7ec8ff","#4caf50"];
+  function resize(){ dpr=Math.min(window.devicePixelRatio||1,2); cv.width=innerWidth*dpr; cv.height=innerHeight*dpr; }
+  resize(); addEventListener("resize",resize);
+  function frame(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    for(var i=parts.length-1;i>=0;i--){
+      var p=parts[i];
+      p.vy+=0.16; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
+      cx.save(); cx.translate(p.x*dpr,p.y*dpr); cx.rotate(p.rot);
+      cx.fillStyle=p.c; cx.globalAlpha=Math.max(0,p.life/p.max);
+      cx.fillRect(-p.s*dpr,-p.s*dpr,p.s*2*dpr,p.s*2*dpr); cx.restore();
+      if(p.life<=0||p.y>innerHeight+40) parts.splice(i,1);
+    }
+    raf = parts.length ? requestAnimationFrame(frame) : 0;
+  }
+  return { burst:function(x,y,n){
+    n=n||70;
+    for(var i=0;i<n;i++){
+      var a=Math.random()*Math.PI*2, sp=2+Math.random()*7;
+      parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,rot:Math.random()*6,
+        vr:(Math.random()-.5)*.4,s:3+Math.random()*4,c:COLORS[(Math.random()*COLORS.length)|0],
+        life:60+Math.random()*40,max:100});
+    }
+    if(!raf) raf=requestAnimationFrame(frame);
+  }};
+})();
+
+/* ---------------- fact helpers ---------------- */
+function key(a,b){ return Math.min(a,b)+"x"+Math.max(a,b); }
+function fact(a,b){ return {a:a,b:b}; }
+
+function hintFor(a,b){
+  var jumps=a, step=b;
+  if(b<a){ jumps=b; step=a; }
+  var ans=a*b;
+  if(jumps<=6){
+    var seq=[], v=0;
+    for(var i=0;i<jumps;i++){ v+=step; seq.push(v); }
+    return "Count by "+step+"s: "+seq.join(", ")+" — that's "+jumps+" jumps to "+ans+".";
+  }
+  return jumps+" groups of "+step+". "+step+"×6 = "+(step*6)+", then keep adding "+step+" up to "+ans+".";
+}
+
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  return arr;
+}
+
+/* ---------------- build the trek ---------------- */
+function allPairs(maxF){
+  var out=[];
+  for(var a=2;a<=maxF;a++) for(var b=a;b<=maxF;b++) out.push(fact(a,b));
+  return out;
+}
+
+function weightedPick(pool, hist, sess){
+  var weights=[], total=0;
+  pool.forEach(function(f){
+    var k=key(f.a,f.b);
+    var h=hist[k]||{c:0,w:0}, s=sess[k]||{wrong:0,mastered:false,seen:0};
+    var wt = 1 + h.w*2.5 + (h.c===0?1.2:0) + s.wrong*4 + (s.seen>0&&!s.mastered?1:0);
+    weights.push(wt); total+=wt;
+  });
+  var r=Math.random()*total;
+  for(var i=0;i<pool.length;i++){ r-=weights[i]; if(r<=0) return pool[i]; }
+  return pool[pool.length-1];
+}
+
+function warmupSet(n, maxF){
+  return shuffle(allPairs(maxF)).slice(0, Math.min(n, (maxF-1)*(maxF)/2)).map(function(f){ return fact(f.a,f.b); });
+}
+
+function ledgeSet(group, maxF, n, hist, sess){
+  var seen={}, pool=[];
+  group.forEach(function(g){
+    for(var b=2;b<=maxF;b++){
+      var k=key(g,b);
+      if(!seen[k]){ seen[k]=1; pool.push(fact(g,b)); }
+    }
+  });
+  var out=[], used={}, guard=0;
+  while(out.length<n && guard<300){
+    guard++;
+    var avail=pool.filter(function(f){ return !used[key(f.a,f.b)]; });
+    if(!avail.length){ used={}; avail=pool; }
+    var pick=weightedPick(avail, hist, sess);
+    used[key(pick.a,pick.b)]=1;
+    out.push(fact(pick.a,pick.b));
+  }
+  return out;
+}
+
+/* ---------------- game state ---------------- */
+var S=null, selectedLevel=3;
+var el={
+  bubble:$("#bubble"), koala:$("#koala"), alt:$("#altLabel"),
+  stage:$("#stageLabel"), pips:$("#pips"), streak:$("#streak"),
+  card:$("#questionCard"), qA:$("#qA"), qB:$("#qB"), abox:$("#answerBox"),
+  hintLine:$("#hintLine"), hintBtn:$("#hintBtn"), pad:$("#pad"),
+  startPanel:$("#startPanel"), ledgePanel:$("#ledgePanel"), endPanel:$("#endPanel"),
+  statusRow:$("#statusRow")
+};
+
+function say(text, mood){
+  el.bubble.textContent=text;
+  el.bubble.className="bubble"+(mood?" "+mood:"");
+}
+function showPlayUI(show){
+  [el.card, el.pad, el.statusRow].forEach(function(n){ n.classList.toggle("hidden", !show); });
+}
+function starHTML(n,max){
+  var s="";
+  for(var i=0;i<max;i++) s += (i<n) ? "★" : '<span class="off">★</span>';
+  return s;
+}
+
+/* ---------------- start ---------------- */
+function startGame(){
+  Sfx.resume();
+  var name = $("#nameInput").value.trim().replace(/[^A-Za-z' -]/g,"").slice(0,16);
+  var level = LEVELS[selectedLevel] ? selectedLevel : 3;
+  lsSet(LS.name, name);
+  lsSet(LS.level, level);
+
+  var cfg = LEVELS[level];
+  var hist = lsGet(LS.hist, {}) || {};
+  var sess = {};
+
+  var rounds = [];
+  rounds.push({type:"warmup", label:"Warm-up", qs:warmupSet(cfg.warmup, cfg.maxF)});
+  cfg.ledges.forEach(function(group,i){
+    rounds.push({type:"ledge", label:"Ledge "+(i+1)+" of "+cfg.ledges.length, group:group,
+      qs:ledgeSet(group, cfg.maxF, cfg.per, hist, sess)});
+  });
+  rounds.push({type:"summit", label:"Summit challenge", qs:[]});
+
+  var planned = 0;
+  rounds.forEach(function(r){ planned += r.qs.length; });
+  planned += 8; // summit estimate; corrected when it's built
+
+  S = {
+    name:name, level:level, cfg:cfg, rounds:rounds, ri:0,
+    hist:hist, facts:sess,
+    queue:[], servedInRound:0,
+    answered:0, planned:planned,
+    firstTryRight:0, totalFirstTry:0,
+    streak:0, bestStreak:0,
+    stars:0, maxStars:0, ledgeMiss:0,
+    current:null, typed:"", awaitingFix:false,
+    startedAt:Date.now(), stage:"play"
+  };
+
+  el.startPanel.classList.add("hidden");
+  el.ledgePanel.classList.add("hidden");
+  el.endPanel.classList.add("hidden");
+  showPlayUI(true);
+  say("Righto"+(name?", "+name:"")+" — first a quick warm-up so I know which facts to work on. Off we go!");
+  setTimeout(beginRound, 950);
+}
+
+function round(){ return S.rounds[S.ri]; }
+
+function beginRound(){
+  var r = round();
+  el.stage.textContent = r.label;
+  S.queue = r.qs.slice();
+  S.servedInRound = 0;
+  S.ledgeMiss = 0;
+  S.requeued = {};
+  if(r.type==="ledge" || r.type==="summit") S.maxStars += 3;
+
+  if(r.type==="warmup") say("Warm-up: just do your best. No stars here — I'm only having a look.");
+  else if(r.type==="ledge") say("The "+r.group.join(" and ")+" times tables. Three stars if you get every one first try!");
+  else say("Last stretch. These are the ones that tripped you up — let's nail 'em.");
+
+  renderPips();
+  setTimeout(nextQuestion, 850);
+}
+
+function frec(k){
+  if(!S.facts[k]) S.facts[k]={streak:0, right:0, wrong:0, seen:0, mastered:false};
+  return S.facts[k];
+}
+
+function nextQuestion(){
+  if(!S.queue.length) return endRound();
+  var q = S.queue.shift();
+  S.servedInRound++;
+  S.current = {a:q.a, b:q.b, k:key(q.a,q.b), ans:q.a*q.b};
+  S.typed=""; S.awaitingFix=false;
+
+  el.qA.textContent=q.a; el.qB.textContent=q.b;
+  el.abox.textContent=" "; el.abox.className="answerbox";
+  el.hintLine.textContent=" ";
+  el.hintBtn.classList.remove("hidden");
+  if(S.cfg.autoHint){ el.hintLine.textContent=hintFor(q.a,q.b); }
+  setPad(true);
+  renderProgress();
+}
+
+function setPad(on){
+  el.pad.querySelectorAll(".key").forEach(function(b){ b.disabled=!on; });
+}
+
+function renderPips(){
+  var r=round();
+  el.pips.innerHTML="";
+  if(r.type==="warmup"){ return; }
+  var total=Math.max(r.qs.length,1);
+  var done=Math.min(S.servedInRound, total);
+  for(var i=0;i<total;i++){
+    var d=document.createElement("span");
+    d.className="pip"+(i<done?" on":"");
+    el.pips.appendChild(d);
+  }
+}
+
+function renderProgress(){
+  var pct=Math.max(0,Math.min(1, S.answered/S.planned));
+  var x=8 + pct*262, y=-pct*22;
+  el.koala.setAttribute("transform","translate("+x.toFixed(1)+","+y.toFixed(1)+")");
+  el.alt.textContent=Math.round(pct*100)+" m";
+  renderPips();
+  el.streak.textContent = S.streak>=3 ? ("streak "+S.streak) : " ";
+  el.streak.className = "streak"+(S.streak>=5?" hot":"");
+}
+
+/* ---------------- input ---------------- */
+function press(k){
+  if(!S || S.stage!=="play" || !S.current) return;
+  var b=el.pad.querySelector('[data-k="'+k+'"]');
+  if(b && b.disabled) return;
+  if(k==="clear"){ S.typed=""; Sfx.type(); }
+  else if(k==="enter"){ return submit(); }
+  else { if(S.typed.length>=4) return; S.typed+=k; Sfx.type(); }
+  el.abox.textContent = S.typed==="" ? " " : S.typed;
+  el.abox.className = "answerbox"+(S.typed?" filled":"");
+}
+
+function submit(){
+  if(!S || S.stage!=="play" || !S.current || S.typed==="") return;
+  var val=parseInt(S.typed,10);
+  var c=S.current, rec=frec(c.k), r=round();
+  setPad(false);
+
+  if(S.awaitingFix){
+    if(val===c.ans){
+      el.abox.textContent=c.ans; el.abox.className="answerbox good";
+      say("There it is. Onwards!","good"); Sfx.correct();
+      advance();
+    } else {
+      el.abox.textContent=S.typed; el.abox.className="answerbox bad";
+      say("Still not it — it's "+c.ans+". Type "+c.ans+" to keep climbing.","bad");
+      S.typed=""; setPad(true);
+    }
+    return;
+  }
+
+  rec.seen++; S.totalFirstTry++;
+  var h=S.hist[c.k]||{c:0,w:0};
+
+  if(val===c.ans){
+    rec.right++; rec.streak++;
+    if(rec.streak>=2) rec.mastered=true;
+    h.c++; S.hist[c.k]=h; lsSet(LS.hist,S.hist);
+    S.firstTryRight++; S.streak++;
+    if(S.streak>S.bestStreak) S.bestStreak=S.streak;
+
+    el.abox.textContent=c.ans; el.abox.className="answerbox good";
+    say(STREAK[S.streak] || PRAISE[(Math.random()*PRAISE.length)|0], "good");
+    Sfx.correct();
+    var box=el.card.getBoundingClientRect();
+    Confetti.burst(box.left+box.width/2, box.top+box.height*0.4, S.streak>=5?110:60);
+    advance();
+  } else {
+    rec.wrong++; rec.streak=0; rec.mastered=false;
+    h.w++; S.hist[c.k]=h; lsSet(LS.hist,S.hist);
+    S.streak=0;
+    if(r.type==="ledge"||r.type==="summit") S.ledgeMiss++;
+    // bring this fact back once more this round (capped so one stubborn fact
+    // can't loop forever — it'll turn up again in the summit anyway)
+    if((S.requeued[c.k]||0) < 1 && !S.queue.some(function(f){ return key(f.a,f.b)===c.k; })){
+      S.requeued[c.k] = (S.requeued[c.k]||0) + 1;
+      var pos=Math.min(S.queue.length, 2);
+      S.queue.splice(pos,0,fact(c.a,c.b));
+    }
+    el.abox.textContent=S.typed; el.abox.className="answerbox bad";
+    say(WRONG[(Math.random()*WRONG.length)|0]+" "+hintFor(c.a,c.b), "bad");
+    el.hintLine.textContent = c.a+" × "+c.b+" = "+c.ans;
+    Sfx.wrong();
+    S.awaitingFix=true; S.typed="";
+    setTimeout(function(){ setPad(true); }, 500);
+  }
+  renderProgress();
+}
+
+function advance(){
+  S.answered++;
+  renderProgress();
+  setTimeout(nextQuestion, 720);
+}
+
+/* ---------------- round transitions ---------------- */
+function endRound(){
+  var r=round();
+  showPlayUI(false);
+
+  if(r.type==="warmup"){
+    S.ri++;
+    el.ledgePanel.classList.remove("hidden");
+    $("#ledgeTitle").textContent="Warm-up done";
+    $("#ledgeStars").innerHTML="";
+    var weak=weakFacts("×");
+    $("#ledgeMsg").textContent = weak.length
+      ? "Spotted a few to work on: "+weak.slice(0,4).join(", ")+". Let's climb."
+      : "Looking sharp already! Let's climb and lock it in.";
+    $("#ledgeBtn").textContent="Start the climb";
+    return;
+  }
+
+  var stars = S.ledgeMiss===0 ? 3 : (S.ledgeMiss<=2 ? 2 : 1);
+  S.stars += stars;
+  Sfx.ledge();
+
+  if(r.type==="summit"){ return finish(); }
+
+  S.ri++;
+  if(round().type==="summit") buildSummit();
+
+  el.ledgePanel.classList.remove("hidden");
+  $("#ledgeTitle").textContent="Ledge cleared!";
+  $("#ledgeStars").innerHTML=starHTML(stars,3);
+  $("#ledgeMsg").textContent = stars===3 ? "Perfect ledge — three stars! You're flying."
+    : (stars===2 ? "Good work, two stars. Keep the streak up next ledge."
+                 : "Got there! That's what practice is for.");
+  $("#ledgeBtn").textContent = round().type==="summit" ? "To the summit" : "Keep climbing";
+}
+
+function buildSummit(){
+  var need=[];
+  Object.keys(S.facts).forEach(function(k){
+    var f=S.facts[k];
+    if(f.wrong>0 || (!f.mastered && f.seen>0)){
+      var p=k.split("x");
+      need.push({a:+p[0], b:+p[1], score:f.wrong*3 + (f.mastered?0:1)});
+    }
+  });
+  need.sort(function(a,b){ return b.score-a.score; });
+  var qs = need.slice(0,12).map(function(f){ return fact(f.a,f.b); });
+  if(qs.length<4){
+    var extra=warmupSet(6, S.cfg.maxF);
+    for(var i=0;i<extra.length && qs.length<8;i++) qs.push(extra[i]);
+  }
+  shuffle(qs);
+  S.rounds[S.ri].qs = qs;
+  S.planned += qs.length - 8; // we reserved 8 earlier
+}
+
+function weakFacts(sep){
+  var out=[];
+  Object.keys(S.facts).forEach(function(k){
+    if(S.facts[k].wrong>0){ var p=k.split("x"); out.push(p[0]+sep+p[1]); }
+  });
+  return out;
+}
+
+/* ---------------- finish ---------------- */
+function finish(){
+  S.stage="done";
+  Sfx.win();
+  var mins=(Date.now()-S.startedAt)/60000;
+  var mastered=0, practice=[];
+  Object.keys(S.facts).forEach(function(k){
+    var f=S.facts[k];
+    // "nailed" = got every attempt right, OR stumbled but locked it in by the end
+    if(f.mastered || (f.wrong===0 && f.right>0)) mastered++;
+    else if(f.wrong>0){ var p=k.split("x"); practice.push(p[0]+" × "+p[1]); }
+  });
+  var acc = S.totalFirstTry ? Math.round(100*S.firstTryRight/S.totalFirstTry) : 0;
+
+  el.endPanel.classList.remove("hidden");
+  $("#endTitle").textContent="You made it to the top!";
+  $("#endStars").innerHTML="★ <b>"+S.stars+"</b> / "+(S.maxStars||3);
+  $("#endMsg").textContent = acc>=90 ? "Cracking effort — barely a wobble on the way up."
+    : (acc>=70 ? "Solid climb. A few more treks and these'll be automatic."
+               : "Big climb! Come back tomorrow and it'll feel easier — promise.");
+  $("#stMastered").textContent=mastered;
+  $("#stAcc").textContent=acc+"%";
+  $("#stAnswered").textContent=S.answered;
+  var mm=Math.floor(mins), ss=Math.round((mins-mm)*60);
+  if(ss===60){ mm++; ss=0; }
+  $("#stTime").textContent=mm+":"+(ss<10?"0":"")+ss;
+
+  var pbox=$("#practiceBox");
+  if(practice.length){
+    var ul=$("#practiceList"); ul.innerHTML="";
+    practice.slice(0,8).forEach(function(t){ var li=document.createElement("li"); li.textContent=t; ul.appendChild(li); });
+    pbox.classList.remove("hidden");
+  } else {
+    pbox.classList.add("hidden");
+  }
+
+  $("#certName").textContent = S.name || "Champion";
+  $("#certLine").textContent = "reached the summit — "+mastered+" facts nailed, "+acc+"% first try";
+  $("#certDate").textContent = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+
+  say("You made it to the top! Look at that view. Proper legend.","good");
+  var b=function(){ Confetti.burst(innerWidth*0.5, innerHeight*0.3, 140); };
+  b(); setTimeout(b,400); setTimeout(b,850);
+}
+
+/* ---------------- start screen wiring ---------------- */
+function selectLevel(l){
+  if(!LEVELS[l]) l=3;
+  selectedLevel=l;
+  document.querySelectorAll(".lvl").forEach(function(b){ b.classList.toggle("sel", +b.dataset.l===l); });
+  $("#lvlDesc").textContent=LEVELS[l].desc;
+}
+
+function applySound(on){ Sfx.set(on); $("#soundBtn").textContent="Sound: "+(on?"on":"off"); }
+
+function init(){
+  $("#nameInput").value = lsGet(LS.name,"") || "";
+  selectLevel(lsGet(LS.level,3));
+
+  $("#levels").addEventListener("click", function(e){
+    var b=e.target.closest(".lvl"); if(b) selectLevel(+b.dataset.l);
+  });
+  $("#startBtn").addEventListener("click", startGame);
+  $("#ledgeBtn").addEventListener("click", function(){
+    el.ledgePanel.classList.add("hidden");
+    showPlayUI(true);
+    beginRound();
+  });
+  $("#againBtn").addEventListener("click", function(){
+    el.endPanel.classList.add("hidden");
+    el.startPanel.classList.remove("hidden");
+    S=null;
+  });
+  $("#printBtn").addEventListener("click", function(){ window.print(); });
+
+  var soundOn = lsGet(LS.sound, true);
+  applySound(soundOn);
+  $("#soundBtn").addEventListener("click", function(){
+    soundOn=!soundOn; lsSet(LS.sound, soundOn); applySound(soundOn);
+    if(soundOn){ Sfx.resume(); Sfx.correct(); }
+  });
+
+  el.pad.addEventListener("click", function(e){
+    var b=e.target.closest(".key"); if(b) press(b.dataset.k);
+  });
+  el.hintBtn.addEventListener("click", function(){
+    if(S && S.current) el.hintLine.textContent = hintFor(S.current.a, S.current.b);
+  });
+  document.addEventListener("keydown", function(e){
+    if(!el.startPanel.classList.contains("hidden")) return;
+    if(!el.endPanel.classList.contains("hidden")) return;
+    if(e.key>="0" && e.key<="9") press(e.key);
+    else if(e.key==="Enter") press("enter");
+    else if(e.key==="Backspace"){
+      if(S && S.typed){ S.typed=S.typed.slice(0,-1);
+        el.abox.textContent=S.typed||" "; el.abox.className="answerbox"+(S.typed?" filled":""); }
+    }
+  });
+
+  showPlayUI(false);
+  say("G'day! Pick a difficulty and hit start. I'll be your guide up the tree.");
+}
+
+init();
+})();
+</script>
+</body>
+</html>
