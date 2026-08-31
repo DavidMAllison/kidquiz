@@ -56,7 +56,7 @@
   @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   #koala .body{animation:bob 1.6s ease-in-out infinite;}
 
-  .keanu{display:flex; gap:10px; align-items:flex-start;}
+  .keanu{display:flex; gap:10px; align-items:flex-start; height:88px;}
   .keanu .avatar{
     flex:0 0 auto; width:52px; height:52px; border-radius:50%;
     background:#cfd6de; display:flex; align-items:center; justify-content:center;
@@ -67,8 +67,10 @@
     position:relative; background:var(--card); border-radius:16px;
     padding:11px 14px; box-shadow:0 4px 14px rgba(80,60,160,.12);
     font-size:16px; line-height:1.35; font-weight:600; flex:1;
-    min-height:44px; display:flex; align-items:center;
+    height:100%; display:flex; align-items:flex-start;
+    overflow-y:auto; scrollbar-width:none;
   }
+  .bubble::-webkit-scrollbar{display:none;}
   .bubble::before{
     content:""; position:absolute; left:-8px; top:16px;
     border:8px solid transparent; border-right-color:var(--card); border-left:0;
@@ -88,7 +90,7 @@
     background:var(--card); border-radius:20px; padding:22px 18px;
     box-shadow:0 8px 24px rgba(80,60,160,.14); text-align:center;
   }
-  .q{font-size:44px; font-weight:800; letter-spacing:1px;
+  .q{font-size:44px; font-weight:800; letter-spacing:1px; min-height:52px;
     display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;}
   .q .eq{color:var(--muted);}
   .answerbox{
@@ -100,7 +102,8 @@
   .answerbox.filled{border-style:solid;}
   .answerbox.good{border-color:var(--good); color:var(--good); background:#e9f8f0;}
   .answerbox.bad{border-color:var(--bad); color:var(--bad); background:#fdeceb;}
-  .hintline{margin-top:12px; font-size:14.5px; font-weight:600; color:var(--purple-dark); min-height:20px;}
+  .hintline{margin-top:12px; font-size:14.5px; font-weight:600; color:var(--purple-dark);
+    height:38px; overflow:hidden;}
   .hintbtn{
     margin-top:10px; border:0; background:var(--pad); color:var(--purple-dark);
     font-family:inherit; font-weight:800; font-size:13px; padding:7px 14px;
@@ -111,7 +114,7 @@
   .key{
     border:0; background:var(--card); color:var(--ink);
     font-family:inherit; font-weight:800; font-size:26px; padding:16px 0;
-    border-radius:16px; cursor:pointer;
+    border-radius:16px; cursor:pointer; touch-action:none;
     box-shadow:0 4px 0 #d8d2ef, 0 6px 14px rgba(80,60,160,.10);
     transition:transform .05s, box-shadow .05s;
   }
@@ -134,7 +137,7 @@
     width:100%; font-family:inherit; font-size:17px; font-weight:700;
     padding:11px 13px; border-radius:12px; border:2px solid #e2ddf3; background:#faf9ff; color:var(--ink);
   }
-  .levels{display:grid; grid-template-columns:repeat(5,1fr); gap:7px;}
+  .levels{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
   .lvl{
     border:2px solid #e2ddf3; background:#faf9ff; border-radius:12px; padding:9px 0;
     font-weight:800; font-size:16px; cursor:pointer; color:var(--muted);
@@ -176,12 +179,61 @@
   .hidden{display:none !important;}
   #confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50;}
 
+  /* ---- practice mode ---- */
+  #scratchBtn{display:none;}
+  body.practice #hintBtn{display:none;}
+  body.practice #scratchBtn{display:inline-block;}
+  .q .pexpr{font-size:38px; white-space:nowrap;}
+  .key.dot{display:none;}
+  .pad.withdot .key.dot{display:block;}
+  .pad.withdot .key.enter{grid-column:1 / -1;}
+
+  /* ---- scratch sheet ---- */
+  #sheet{
+    position:fixed; inset:0; z-index:60; display:flex; flex-direction:column; gap:8px;
+    padding:10px 10px 14px; background:linear-gradient(180deg,var(--sky1),var(--sky2));
+    transform:translateY(100%); transition:transform .28s ease; pointer-events:none;
+  }
+  #sheet.open{transform:translateY(0); pointer-events:auto;}
+  .sheet-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  #sheetExpr{font-weight:800; font-size:22px; color:var(--ink);}
+  .sheet-tools{display:flex; gap:7px; flex-wrap:wrap;}
+  .tool{
+    border:0; background:rgba(255,255,255,.85); color:var(--ink);
+    font-family:inherit; font-weight:800; font-size:13px; padding:8px 13px;
+    border-radius:999px; cursor:pointer;
+  }
+  .tool.sel{background:var(--purple); color:#fff;}
+  #sheetHint{
+    background:#fff; border-radius:12px; padding:10px 12px; max-height:36vh; overflow:auto;
+    font-size:13px; font-weight:600; color:var(--ink);
+  }
+  #sheetHint .hcols{display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin:4px 0 2px;}
+  #sheetHint table{border-collapse:collapse; font-variant-numeric:tabular-nums;}
+  #sheetHint table.boxm td, #sheetHint table.boxm th{
+    border:1px solid #cfc7f0; padding:3px 7px; text-align:right; font-weight:700; font-size:12.5px;
+  }
+  #sheetHint table.boxm .corner{background:var(--pad); color:var(--muted);}
+  #sheetHint table.stk td{padding:1px 6px; text-align:right; font-size:12.5px;}
+  #sheetHint table.stk .ann{color:var(--muted); font-weight:600; font-size:11px; text-align:left;}
+  #sheetHint table.stk .rule td{border-top:2px solid var(--ink); padding-top:2px;}
+  #sheetHint table.stk .tot{font-weight:800; color:var(--purple-dark);}
+  #sheetHint .hnote{margin:6px 0 0;}
+  #scratch{
+    flex:1; width:100%; min-height:130px; border-radius:12px; background:#fff;
+    background-image:
+      repeating-linear-gradient(#eef1fb 0 1px, transparent 1px 26px),
+      repeating-linear-gradient(90deg,#eef1fb 0 1px, transparent 1px 26px);
+    touch-action:none; overscroll-behavior:contain; cursor:crosshair;
+  }
+
   @media (max-width:380px){
     .q{font-size:38px;} .answerbox{font-size:32px;} .key{font-size:23px; padding:14px 0;}
   }
   @media print{
     body{background:#fff;}
     #app > *{display:none !important;}
+    #sheet{display:none !important;}
     #endPanel{display:block !important; box-shadow:none;}
     #endPanel > *:not(#cert){display:none !important;}
     #cert{display:block !important; border-color:#333;}
@@ -249,10 +301,11 @@
   </div>
 
   <div class="card" id="questionCard">
-    <div class="q"><span id="qA">7</span><span class="eq">×</span><span id="qB">8</span><span class="eq">=</span></div>
+    <div class="q" id="qExpr"><span>7</span><span class="eq">×</span><span>8</span><span class="eq">=</span></div>
     <div class="answerbox" id="answerBox">&nbsp;</div>
     <div class="hintline" id="hintLine">&nbsp;</div>
     <button class="hintbtn" id="hintBtn" type="button">Show a hint</button>
+    <button class="hintbtn" id="scratchBtn" type="button">✏️ Work it out</button>
   </div>
 
   <div class="pad" id="pad">
@@ -267,7 +320,23 @@
     <button class="key" data-k="9">9</button>
     <button class="key clear" data-k="clear">&#10005;</button>
     <button class="key" data-k="0">0</button>
+    <button class="key dot" data-k="dot">.</button>
     <button class="key enter" data-k="enter">Go</button>
+  </div>
+
+  <div id="sheet">
+    <div class="sheet-head">
+      <span id="sheetExpr">&nbsp;</span>
+      <button class="iconbtn" id="sheetDone" type="button">Done</button>
+    </div>
+    <div class="sheet-tools">
+      <button class="tool sel" data-t="pen" type="button">Pen</button>
+      <button class="tool" data-t="erase" type="button">Eraser</button>
+      <button class="tool" data-t="clear" type="button">Clear</button>
+      <button class="tool" id="howBtn" type="button">Show me how</button>
+    </div>
+    <div id="sheetHint" class="hidden"></div>
+    <canvas id="scratch"></canvas>
   </div>
 
   <div class="panel" id="startPanel">
@@ -278,13 +347,19 @@
       <input type="text" id="nameInput" autocomplete="off" spellcheck="false" maxlength="16" placeholder="optional">
     </div>
     <div class="field">
-      <label>Difficulty</label>
+      <label>Learn the facts</label>
       <div class="levels" id="levels">
-        <button class="lvl" data-l="1" type="button">1</button>
-        <button class="lvl" data-l="2" type="button">2</button>
-        <button class="lvl" data-l="3" type="button">3</button>
-        <button class="lvl" data-l="4" type="button">4</button>
-        <button class="lvl" data-l="5" type="button">5</button>
+        <button class="lvl" data-k="0-4" type="button">0&ndash;4</button>
+        <button class="lvl" data-k="5-10" type="button">5&ndash;10</button>
+        <button class="lvl" data-k="11-12" type="button">11&ndash;12</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Practice sums</label>
+      <div class="levels" id="modes">
+        <button class="lvl" data-k="2d" type="button">2-digit</button>
+        <button class="lvl" data-k="3d" type="button">3-digit</button>
+        <button class="lvl" data-k="dec" type="button">Decimals</button>
       </div>
       <div class="lvldesc" id="lvlDesc"></div>
     </div>
@@ -303,9 +378,9 @@
     <div class="stars" id="endStars"></div>
     <p id="endMsg"></p>
     <div class="statgrid">
-      <div class="stat"><b id="stMastered">0</b><span>facts nailed</span></div>
+      <div class="stat"><b id="stMastered">0</b><span id="lblM">facts nailed</span></div>
       <div class="stat"><b id="stAcc">0%</b><span>first-try accuracy</span></div>
-      <div class="stat"><b id="stAnswered">0</b><span>questions climbed</span></div>
+      <div class="stat"><b id="stAnswered">0</b><span id="lblA">questions climbed</span></div>
       <div class="stat"><b id="stTime">0:00</b><span>time on the trail</span></div>
     </div>
     <div class="practice hidden" id="practiceBox">
@@ -330,25 +405,45 @@
 var $ = function(s){ return document.querySelector(s); };
 
 /* ---------------- config ---------------- */
-var LEVELS = {
-  1:{desc:"Tables up to 5. Gentle pace, hint shown every time, short ledges.",
-     maxF:5,  ledges:[[2],[3],[4,5]],                 per:6,  warmup:8,  autoHint:true},
-  2:{desc:"Tables up to 10. Easy ramp, plenty of skip-counting help.",
-     maxF:10, ledges:[[2,3],[4,6],[7,8,9]],           per:7,  warmup:10, autoHint:true},
-  3:{desc:"All tables to 12, focus on the tricky ones (3,4,6,7,8,9,11,12).",
-     maxF:12, ledges:[[3,4],[6,7],[8,9],[11,12]],     per:6,  warmup:10, autoHint:false},
-  4:{desc:"All tables to 12, quicker pace, streaks matter more.",
-     maxF:12, ledges:[[3,4],[6,7],[8,9],[11,12]],     per:7,  warmup:10, autoHint:false},
-  5:{desc:"All tables to 12, five ledges, keep the streak alive.",
-     maxF:12, ledges:[[2,3],[4,6],[7,8],[9,11],[12]], per:7,  warmup:10, autoHint:false}
+// A band is a set of times tables to drill; the other factor always runs 0–12
+// (so the "5–10" band asks 5×0 … 5×12, 6×0 … 6×12, and so on).
+var BANDS = {
+  "0-4":  {label:"0–4",   tables:[0,1,2,3,4],
+           ledges:[[0,1,2],[3],[4]],
+           desc:"The starter facts — 0, 1, 2, 3 and 4 times tables. Build that confidence."},
+  "5-10": {label:"5–10",  tables:[5,6,7,8,9,10],
+           ledges:[[5,6],[7,8],[9,10]],
+           desc:"The middle stretch — 5, 6, 7, 8, 9 and 10 times tables."},
+  "11-12":{label:"11–12", tables:[11,12],
+           ledges:[[11],[12]],
+           desc:"The tricky two — 11 and 12 times tables."}
 };
+var PACE = {per:7, warmup:10, autoHint:true};
+var DEFAULT_BAND = "5-10";
+
+// Practice modes: multi-digit multiplication. Each problem is one-off (no fact
+// history); the child does the working on the slide-out scratchpad and types the
+// number. "2x2" = two 2-digit numbers, "3x2" = 3-digit × 2-digit, "dec" = two
+// one-decimal-place numbers.
+var MODES = {
+  "2d": {label:"2-digit",  kind:"practice", gen:"2x2",
+         desc:"Two 2-digit numbers, e.g. 47 × 83. Tap “Work it out” for scratch paper."},
+  "3d": {label:"3-digit",  kind:"practice", gen:"3x2",
+         desc:"A 3-digit number times a 2-digit one, e.g. 284 × 36."},
+  "dec":{label:"decimals", kind:"practice", gen:"dec",
+         desc:"Two numbers with one decimal place, e.g. 4.7 × 8.3."}
+};
+// merged lookup: bands carry kind:"band", modes carry kind:"practice"
+var PLAY = {};
+Object.keys(BANDS).forEach(function(k){ BANDS[k].kind="band"; PLAY[k]=BANDS[k]; });
+Object.keys(MODES).forEach(function(k){ PLAY[k]=MODES[k]; });
 var PRAISE = ["Beauty!","Nice one!","You little ripper!","Too easy for ya!","Spot on, mate!",
               "Cracking!","Get up there!","Solid.","Yes! Keep going.","Good as gold."];
 var STREAK = {3:"Three straight — you're on fire!",5:"Five in a row! Absolute legend.",
               8:"Eight without a slip. Unreal.",12:"Twelve straight?! Keanu's speechless."};
 var WRONG  = ["Not quite — have a squiz at this.","Close! Let's count it out.",
               "No worries, let's work it through.","Almost. Here's the trick."];
-var LS = {name:"ttt.name", level:"ttt.level", sound:"ttt.sound", hist:"ttt.hist"};
+var LS = {name:"ttt.name", band:"ttt.band", sound:"ttt.sound", hist:"ttt.hist"};
 
 /* ---------------- storage ---------------- */
 function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
@@ -414,15 +509,25 @@ function key(a,b){ return Math.min(a,b)+"x"+Math.max(a,b); }
 function fact(a,b){ return {a:a,b:b}; }
 
 function hintFor(a,b){
+  var ans=a*b;
+  if(a===0 || b===0) return "Anything times 0 is 0, so "+a+" × "+b+" = 0.";
+  if(a===1 || b===1) return "Times 1 doesn't change it: "+a+" × "+b+" = "+ans+".";
   var jumps=a, step=b;
   if(b<a){ jumps=b; step=a; }
-  var ans=a*b;
   if(jumps<=6){
     var seq=[], v=0;
     for(var i=0;i<jumps;i++){ v+=step; seq.push(v); }
     return "Count by "+step+"s: "+seq.join(", ")+" — that's "+jumps+" jumps to "+ans+".";
   }
-  return jumps+" groups of "+step+". "+step+"×6 = "+(step*6)+", then keep adding "+step+" up to "+ans+".";
+  var anchor = jumps>=10 ? 10 : 5, more = jumps-anchor;
+  if(more===0) return step+" × "+anchor+" is a known one: "+ans+".";
+  return step+" × "+anchor+" = "+(step*anchor)+", then add "+step+" "+more+" more time"+(more===1?"":"s")+" to reach "+ans+".";
+}
+
+function listWords(arr){
+  if(arr.length<=1) return String(arr[0]);
+  if(arr.length===2) return arr[0]+" and "+arr[1];
+  return arr.slice(0,-1).join(", ")+" and "+arr[arr.length-1];
 }
 
 function shuffle(arr){
@@ -431,9 +536,13 @@ function shuffle(arr){
 }
 
 /* ---------------- build the trek ---------------- */
-function allPairs(maxF){
+// Every question is a band table (0–12) times a partner (0–12), kept in that
+// order so "the 7s" always reads "7 × n". key()/history stay commutative.
+function bandPairs(tables){
   var out=[];
-  for(var a=2;a<=maxF;a++) for(var b=a;b<=maxF;b++) out.push(fact(a,b));
+  tables.forEach(function(t){
+    for(var p=0;p<=12;p++) out.push(fact(t,p));
+  });
   return out;
 }
 
@@ -450,36 +559,189 @@ function weightedPick(pool, hist, sess){
   return pool[pool.length-1];
 }
 
-function warmupSet(n, maxF){
-  return shuffle(allPairs(maxF)).slice(0, Math.min(n, (maxF-1)*(maxF)/2)).map(function(f){ return fact(f.a,f.b); });
+function warmupSet(n, tables){
+  var pool = bandPairs(tables);
+  return shuffle(pool).slice(0, Math.min(n, pool.length));
 }
 
-function ledgeSet(group, maxF, n, hist, sess){
-  var seen={}, pool=[];
+function ledgeSet(group, n, hist, sess){
+  var pool=[];
   group.forEach(function(g){
-    for(var b=2;b<=maxF;b++){
-      var k=key(g,b);
-      if(!seen[k]){ seen[k]=1; pool.push(fact(g,b)); }
-    }
+    for(var p=0;p<=12;p++) pool.push(fact(g,p));
   });
   var out=[], used={}, guard=0;
   while(out.length<n && guard<300){
     guard++;
-    var avail=pool.filter(function(f){ return !used[key(f.a,f.b)]; });
+    var avail=pool.filter(function(f){ return !used[f.a+"x"+f.b]; });
     if(!avail.length){ used={}; avail=pool; }
     var pick=weightedPick(avail, hist, sess);
-    used[key(pick.a,pick.b)]=1;
+    used[pick.a+"x"+pick.b]=1;
     out.push(fact(pick.a,pick.b));
   }
   return out;
 }
 
+/* ---------------- practice problems ---------------- */
+function rnd(lo,hi){ return lo + Math.floor(Math.random()*(hi-lo+1)); }
+function fmtNum(n){ return String(Math.round(n*100)/100); }
+
+function practiceProblem(gen, hard){
+  if(gen==="dec"){
+    var x=rnd(11,99)/10, y=rnd(11,99)/10;
+    return {a:x, b:y, dp:2, ans:Math.round(x*y*100)/100, display:fmtNum(x)+" × "+fmtNum(y)};
+  }
+  var a, b;
+  if(gen==="2x2"){ a=rnd(hard?24:12, 99); b=rnd(hard?24:12, 99); }
+  else { a=rnd(hard?240:104, 999); b=rnd(hard?24:12, 99); }   // 3x2
+  if(b%10===0) b+=rnd(1,9);   // keep it from being a trivial ×10
+  return {a:a, b:b, dp:0, ans:a*b, display:a+" × "+b};
+}
+
+function practiceSet(gen, n, hard){
+  var out=[], seen={}, guard=0;
+  while(out.length<n && guard++<200){
+    var p=practiceProblem(gen, hard);
+    if(seen[p.display]) continue;
+    seen[p.display]=1; out.push(p);
+  }
+  return out;
+}
+
+/* place-value pieces of a whole number, e.g. 284 -> [200,80,4] (zeros dropped) */
+function placeParts(n){
+  var s=String(n), out=[];
+  for(var i=0;i<s.length;i++){
+    var d=+s[i];
+    if(d) out.push(d*Math.pow(10, s.length-1-i));
+  }
+  return out.length ? out : [0];
+}
+
+function boxHTML(a,b){
+  var ax=placeParts(a), bx=placeParts(b), h='<table class="boxm"><tr><td class="corner">×</td>';
+  ax.forEach(function(p){ h+='<th>'+p+'</th>'; });
+  h+='</tr>';
+  bx.forEach(function(q){
+    h+='<tr><th>'+q+'</th>';
+    ax.forEach(function(p){ h+='<td>'+(p*q)+'</td>'; });
+    h+='</tr>';
+  });
+  return h+'</table>';
+}
+
+function stackedHTML(a,b){
+  var parts=placeParts(b).sort(function(x,y){ return x-y; });   // ones first
+  var rows=parts.map(function(p){
+    return '<tr><td>'+(a*p)+'</td><td class="ann">'+a+' × '+p+'</td></tr>';
+  }).join('');
+  return '<table class="stk">'
+    +'<tr><td>'+a+'</td><td></td></tr>'
+    +'<tr><td>× '+b+'</td><td></td></tr>'
+    +'<tr class="rule"><td></td><td></td></tr>'
+    + rows
+    + (parts.length>1 ? '<tr class="rule"><td></td><td></td></tr>' : '')
+    +'<tr><td class="tot">'+(a*b)+'</td><td></td></tr>'
+    +'</table>';
+}
+
+function practiceHintHTML(c){
+  if(c.dp>0){
+    var wa=Math.round(c.a*10), wb=Math.round(c.b*10);
+    return '<p class="hnote">Ignore the dots for now — work out <b>'+wa+' × '+wb+'</b>:</p>'
+      + '<div class="hcols">'+boxHTML(wa,wb)+stackedHTML(wa,wb)+'</div>'
+      + '<p class="hnote">'+fmtNum(c.a)+' has 1 decimal place and '+fmtNum(c.b)+' has 1 — that\'s 2 places. '
+      + 'Count 2 back from the end of '+(wa*wb)+' → <b>'+fmtNum(c.ans)+'</b>.</p>';
+  }
+  return '<p class="hnote">Split each number by place value, multiply every pair, then add:</p>'
+    + '<div class="hcols">'+boxHTML(c.a,c.b)+stackedHTML(c.a,c.b)+'</div>'
+    + '<p class="hnote">All the pieces add up to <b>'+(c.a*c.b)+'</b>.</p>';
+}
+
+/* ---------------- scratchpad ---------------- */
+var Pad2 = (function(){
+  var cv, cx, dpr=1, drawing=false, last=null, tool="pen";
+  function setup(){
+    cv=$("#scratch"); if(!cv) return;
+    cx=cv.getContext("2d", {willReadFrequently:true});
+    dpr=Math.min(window.devicePixelRatio||1, 2);
+    cv.addEventListener("pointerdown", down);
+    cv.addEventListener("pointermove", move);
+    cv.addEventListener("pointerup", up);
+    cv.addEventListener("pointercancel", up);
+    cv.addEventListener("pointerleave", up);
+    $("#sheet").querySelector(".sheet-tools").addEventListener("click", function(e){
+      var b=e.target.closest(".tool"); if(!b || !b.dataset.t) return;
+      if(b.dataset.t==="clear"){ clear(); return; }
+      tool=b.dataset.t;
+      $("#sheet").querySelectorAll(".tool[data-t]").forEach(function(x){ x.classList.toggle("sel", x===b); });
+    });
+  }
+  function fit(){
+    var r=cv.getBoundingClientRect();
+    var w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
+    if(w===cv.width && h===cv.height){ return; }
+    var prev=null;
+    try{ if(cv.width && cv.height) prev=cx.getImageData(0,0,cv.width,cv.height); }catch(e){}
+    cv.width=w; cv.height=h;
+    cx.setTransform(dpr,0,0,dpr,0,0);
+    if(prev){ try{ cx.putImageData(prev,0,0); }catch(e){} }
+  }
+  function relPt(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+  function down(e){
+    drawing=true; last=relPt(e); e.preventDefault();
+    try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+    stroke(last, last);   // a dot on tap
+  }
+  function move(e){ if(!drawing) return; e.preventDefault(); var p=relPt(e); stroke(last, p); last=p; }
+  function up(){ drawing=false; last=null; }
+  function stroke(p0,p1){
+    cx.globalCompositeOperation = (tool==="erase") ? "destination-out" : "source-over";
+    cx.strokeStyle="#3b2d7d"; cx.lineWidth = (tool==="erase") ? 26 : 3;
+    cx.lineCap="round"; cx.lineJoin="round";
+    cx.beginPath(); cx.moveTo(p0.x,p0.y); cx.lineTo(p1.x,p1.y); cx.stroke();
+  }
+  function clear(){
+    cx.setTransform(1,0,0,1,0,0);
+    cx.clearRect(0,0,cv.width,cv.height);
+    cx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  return {
+    setup:setup,
+    reset:function(){ fit(); clear(); },   // new question
+    refit:function(){ fit(); }             // layout changed, keep the ink
+  };
+})();
+
+function openSheet(){
+  if(!S || !S.practice || !S.current) return;
+  $("#sheetExpr").textContent = S.current.display;
+  var hint=$("#sheetHint");
+  hint.innerHTML=""; hint.classList.add("hidden");
+  $("#howBtn").textContent="Show me how";
+  $("#sheet").classList.add("open");
+  Pad2.reset();
+}
+function closeSheet(){ $("#sheet").classList.remove("open"); }
+function toggleHow(){
+  if(!S || !S.current) return;
+  var hint=$("#sheetHint");
+  if(hint.classList.contains("hidden")){
+    hint.innerHTML=practiceHintHTML(S.current);
+    hint.classList.remove("hidden");
+    $("#howBtn").textContent="Hide";
+  } else {
+    hint.classList.add("hidden");
+    $("#howBtn").textContent="Show me how";
+  }
+  Pad2.refit();
+}
+
 /* ---------------- game state ---------------- */
-var S=null, selectedLevel=3;
+var S=null, selectedKey=DEFAULT_BAND;
 var el={
   bubble:$("#bubble"), koala:$("#koala"), alt:$("#altLabel"),
   stage:$("#stageLabel"), pips:$("#pips"), streak:$("#streak"),
-  card:$("#questionCard"), qA:$("#qA"), qB:$("#qB"), abox:$("#answerBox"),
+  card:$("#questionCard"), qExpr:$("#qExpr"), abox:$("#answerBox"),
   hintLine:$("#hintLine"), hintBtn:$("#hintBtn"), pad:$("#pad"),
   startPanel:$("#startPanel"), ledgePanel:$("#ledgePanel"), endPanel:$("#endPanel"),
   statusRow:$("#statusRow")
@@ -492,6 +754,12 @@ function say(text, mood){
 function showPlayUI(show){
   [el.card, el.pad, el.statusRow].forEach(function(n){ n.classList.toggle("hidden", !show); });
 }
+function renderQExpr(){
+  var c=S.current;
+  el.qExpr.innerHTML = S.practice
+    ? '<span class="pexpr">'+c.display+'</span> <span class="eq">=</span>'
+    : '<span>'+c.a+'</span><span class="eq">×</span><span>'+c.b+'</span><span class="eq">=</span>';
+}
 function starHTML(n,max){
   var s="";
   for(var i=0;i<max;i++) s += (i<n) ? "★" : '<span class="off">★</span>';
@@ -502,37 +770,48 @@ function starHTML(n,max){
 function startGame(){
   Sfx.resume();
   var name = $("#nameInput").value.trim().replace(/[^A-Za-z' -]/g,"").slice(0,16);
-  var level = LEVELS[selectedLevel] ? selectedLevel : 3;
+  var key = PLAY[selectedKey] ? selectedKey : DEFAULT_BAND;
   lsSet(LS.name, name);
-  lsSet(LS.level, level);
+  lsSet(LS.band, key);
 
-  var cfg = LEVELS[level];
+  var cfg = PLAY[key];
+  var practice = cfg.kind==="practice";
   var hist = lsGet(LS.hist, {}) || {};
   var sess = {};
 
   var rounds = [];
-  rounds.push({type:"warmup", label:"Warm-up", qs:warmupSet(cfg.warmup, cfg.maxF)});
-  cfg.ledges.forEach(function(group,i){
-    rounds.push({type:"ledge", label:"Ledge "+(i+1)+" of "+cfg.ledges.length, group:group,
-      qs:ledgeSet(group, cfg.maxF, cfg.per, hist, sess)});
-  });
+  if(practice){
+    rounds.push({type:"warmup", label:"Warm-up",    qs:practiceSet(cfg.gen, 2, false)});
+    rounds.push({type:"ledge",  label:"Ledge 1 of 2", qs:practiceSet(cfg.gen, 3, false)});
+    rounds.push({type:"ledge",  label:"Ledge 2 of 2", qs:practiceSet(cfg.gen, 3, true)});
+  } else {
+    rounds.push({type:"warmup", label:"Warm-up", qs:warmupSet(PACE.warmup, cfg.tables)});
+    cfg.ledges.forEach(function(group,i){
+      rounds.push({type:"ledge", label:"Ledge "+(i+1)+" of "+cfg.ledges.length, group:group,
+        qs:ledgeSet(group, PACE.per, hist, sess)});
+    });
+  }
   rounds.push({type:"summit", label:"Summit challenge", qs:[]});
 
   var planned = 0;
   rounds.forEach(function(r){ planned += r.qs.length; });
-  planned += 8; // summit estimate; corrected when it's built
+  planned += practice ? 3 : 8; // summit estimate; corrected when it's built
 
   S = {
-    name:name, level:level, cfg:cfg, rounds:rounds, ri:0,
-    hist:hist, facts:sess,
+    name:name, band:key, cfg:cfg, practice:practice, gen:cfg.gen, rounds:rounds, ri:0,
+    hist:hist, facts:sess, qseq:0, practiceMiss:[],
     queue:[], servedInRound:0,
     answered:0, planned:planned,
     firstTryRight:0, totalFirstTry:0,
     streak:0, bestStreak:0,
     stars:0, maxStars:0, ledgeMiss:0,
-    current:null, typed:"", awaitingFix:false,
+    current:null, typed:"", awaitingFix:false, accepting:false,
     startedAt:Date.now(), stage:"play"
   };
+
+  document.body.classList.toggle("practice", practice);
+  el.pad.classList.toggle("withdot", practice && cfg.gen==="dec");
+  closeSheet();
 
   el.startPanel.classList.add("hidden");
   el.ledgePanel.classList.add("hidden");
@@ -554,7 +833,9 @@ function beginRound(){
   if(r.type==="ledge" || r.type==="summit") S.maxStars += 3;
 
   if(r.type==="warmup") say("Warm-up: just do your best. No stars here — I'm only having a look.");
-  else if(r.type==="ledge") say("The "+r.group.join(" and ")+" times tables. Three stars if you get every one first try!");
+  else if(r.type==="ledge" && S.practice) say("Take your time. Tap “Work it out” for scratch paper. Three stars for a clean ledge!");
+  else if(r.type==="ledge") say("The "+listWords(r.group)+" times table"+(r.group.length>1?"s":"")+". Three stars if you get every one first try!");
+  else if(S.practice) say("Last few — the trickier ones. Scratch paper's right there if you need it.");
   else say("Last stretch. These are the ones that tripped you up — let's nail 'em.");
 
   renderPips();
@@ -570,20 +851,28 @@ function nextQuestion(){
   if(!S.queue.length) return endRound();
   var q = S.queue.shift();
   S.servedInRound++;
-  S.current = {a:q.a, b:q.b, k:key(q.a,q.b), ans:q.a*q.b};
+  if(S.practice){
+    S.current = {a:q.a, b:q.b, k:"p"+(S.qseq++), ans:q.ans, dp:q.dp, display:q.display};
+    frec(S.current.k).label = q.display;
+  } else {
+    S.current = {a:q.a, b:q.b, k:key(q.a,q.b), ans:q.a*q.b, dp:0};
+  }
   S.typed=""; S.awaitingFix=false;
 
-  el.qA.textContent=q.a; el.qB.textContent=q.b;
+  renderQExpr();
   el.abox.textContent=" "; el.abox.className="answerbox";
   el.hintLine.textContent=" ";
   el.hintBtn.classList.remove("hidden");
-  if(S.cfg.autoHint){ el.hintLine.textContent=hintFor(q.a,q.b); }
+  if(!S.practice && PACE.autoHint){ el.hintLine.textContent=hintFor(q.a,q.b); }
+  if(S.practice){ closeSheet(); Pad2.reset(); }
   setPad(true);
   renderProgress();
 }
 
 function setPad(on){
-  el.pad.querySelectorAll(".key").forEach(function(b){ b.disabled=!on; });
+  // Gate input with a flag rather than the disabled attribute so the keys never
+  // dim or lose their :active press feedback during the brief post-answer locks.
+  if(S) S.accepting=on;
 }
 
 function renderPips(){
@@ -611,46 +900,58 @@ function renderProgress(){
 
 /* ---------------- input ---------------- */
 function press(k){
-  if(!S || S.stage!=="play" || !S.current) return;
-  var b=el.pad.querySelector('[data-k="'+k+'"]');
-  if(b && b.disabled) return;
+  if(!S || S.stage!=="play" || !S.current || !S.accepting) return;
   if(k==="clear"){ S.typed=""; Sfx.type(); }
   else if(k==="enter"){ return submit(); }
-  else { if(S.typed.length>=4) return; S.typed+=k; Sfx.type(); }
+  else if(k==="dot"){
+    if(!S.current.dp || S.typed.indexOf(".")>=0) return;
+    S.typed = (S.typed==="" ? "0." : S.typed+"."); Sfx.type();
+  }
+  else {
+    var cap = S.practice ? 6 : 4;
+    if(S.typed.replace(".","").length>=cap) return;
+    S.typed+=k; Sfx.type();
+  }
   el.abox.textContent = S.typed==="" ? " " : S.typed;
   el.abox.className = "answerbox"+(S.typed?" filled":"");
 }
 
+function isRight(c){
+  return c.dp>0 ? Math.abs(parseFloat(S.typed) - c.ans) < 0.005
+                : parseInt(S.typed,10) === c.ans;
+}
+function ansText(c){ return c.dp>0 ? fmtNum(c.ans) : String(c.ans); }
+
 function submit(){
   if(!S || S.stage!=="play" || !S.current || S.typed==="") return;
-  var val=parseInt(S.typed,10);
   var c=S.current, rec=frec(c.k), r=round();
+  var right=isRight(c);
   setPad(false);
 
   if(S.awaitingFix){
-    if(val===c.ans){
-      el.abox.textContent=c.ans; el.abox.className="answerbox good";
+    if(right){
+      el.abox.textContent=ansText(c); el.abox.className="answerbox good";
       say("There it is. Onwards!","good"); Sfx.correct();
       advance();
     } else {
       el.abox.textContent=S.typed; el.abox.className="answerbox bad";
-      say("Still not it — it's "+c.ans+". Type "+c.ans+" to keep climbing.","bad");
+      say("Still not it — it's "+ansText(c)+". Type "+ansText(c)+" to keep climbing.","bad");
       S.typed=""; setPad(true);
     }
     return;
   }
 
   rec.seen++; S.totalFirstTry++;
-  var h=S.hist[c.k]||{c:0,w:0};
+  var h = S.practice ? null : (S.hist[c.k]||{c:0,w:0});
 
-  if(val===c.ans){
+  if(right){
     rec.right++; rec.streak++;
     if(rec.streak>=2) rec.mastered=true;
-    h.c++; S.hist[c.k]=h; lsSet(LS.hist,S.hist);
+    if(h){ h.c++; S.hist[c.k]=h; lsSet(LS.hist,S.hist); }
     S.firstTryRight++; S.streak++;
     if(S.streak>S.bestStreak) S.bestStreak=S.streak;
 
-    el.abox.textContent=c.ans; el.abox.className="answerbox good";
+    el.abox.textContent=ansText(c); el.abox.className="answerbox good";
     say(STREAK[S.streak] || PRAISE[(Math.random()*PRAISE.length)|0], "good");
     Sfx.correct();
     var box=el.card.getBoundingClientRect();
@@ -658,22 +959,30 @@ function submit(){
     advance();
   } else {
     rec.wrong++; rec.streak=0; rec.mastered=false;
-    h.w++; S.hist[c.k]=h; lsSet(LS.hist,S.hist);
+    if(h){ h.w++; S.hist[c.k]=h; lsSet(LS.hist,S.hist); }
     S.streak=0;
     if(r.type==="ledge"||r.type==="summit") S.ledgeMiss++;
-    // bring this fact back once more this round (capped so one stubborn fact
-    // can't loop forever — it'll turn up again in the summit anyway)
-    if((S.requeued[c.k]||0) < 1 && !S.queue.some(function(f){ return key(f.a,f.b)===c.k; })){
-      S.requeued[c.k] = (S.requeued[c.k]||0) + 1;
-      var pos=Math.min(S.queue.length, 2);
-      S.queue.splice(pos,0,fact(c.a,c.b));
-    }
     el.abox.textContent=S.typed; el.abox.className="answerbox bad";
-    say(WRONG[(Math.random()*WRONG.length)|0]+" "+hintFor(c.a,c.b), "bad");
-    el.hintLine.textContent = c.a+" × "+c.b+" = "+c.ans;
+
+    if(S.practice){
+      if(!S.practiceMiss.some(function(m){ return m.display===c.display; }))
+        S.practiceMiss.push({a:c.a, b:c.b, dp:c.dp, ans:c.ans, display:c.display});
+      say(WRONG[(Math.random()*WRONG.length)|0]+" Tap “Work it out” and take it a step at a time.","bad");
+      el.hintLine.textContent = c.display+" = "+ansText(c);
+    } else {
+      // bring this fact back once more this round (capped so one stubborn fact
+      // can't loop forever — it'll turn up again in the summit anyway)
+      if((S.requeued[c.k]||0) < 1 && !S.queue.some(function(f){ return key(f.a,f.b)===c.k; })){
+        S.requeued[c.k] = (S.requeued[c.k]||0) + 1;
+        var pos=Math.min(S.queue.length, 2);
+        S.queue.splice(pos,0,fact(c.a,c.b));
+      }
+      say(WRONG[(Math.random()*WRONG.length)|0]+" "+hintFor(c.a,c.b), "bad");
+      el.hintLine.textContent = c.a+" × "+c.b+" = "+c.ans;
+    }
     Sfx.wrong();
     S.awaitingFix=true; S.typed="";
-    setTimeout(function(){ setPad(true); }, 500);
+    setPad(true);
   }
   renderProgress();
 }
@@ -687,6 +996,7 @@ function advance(){
 /* ---------------- round transitions ---------------- */
 function endRound(){
   var r=round();
+  setPad(false); // ignore stray taps in the gap before the next round's first question
   showPlayUI(false);
 
   if(r.type==="warmup"){
@@ -721,6 +1031,14 @@ function endRound(){
 }
 
 function buildSummit(){
+  if(S.practice){
+    var pqs = S.practiceMiss.slice(0,3), guard=0;
+    while(pqs.length<3 && guard++<50) pqs.push(practiceProblem(S.gen, true));
+    shuffle(pqs);
+    S.rounds[S.ri].qs = pqs;
+    S.planned += pqs.length - 3; // we reserved 3 earlier
+    return;
+  }
   var need=[];
   Object.keys(S.facts).forEach(function(k){
     var f=S.facts[k];
@@ -732,7 +1050,7 @@ function buildSummit(){
   need.sort(function(a,b){ return b.score-a.score; });
   var qs = need.slice(0,12).map(function(f){ return fact(f.a,f.b); });
   if(qs.length<4){
-    var extra=warmupSet(6, S.cfg.maxF);
+    var extra=warmupSet(6, S.cfg.tables);
     for(var i=0;i<extra.length && qs.length<8;i++) qs.push(extra[i]);
   }
   shuffle(qs);
@@ -743,7 +1061,8 @@ function buildSummit(){
 function weakFacts(sep){
   var out=[];
   Object.keys(S.facts).forEach(function(k){
-    if(S.facts[k].wrong>0){ var p=k.split("x"); out.push(p[0]+sep+p[1]); }
+    var f=S.facts[k];
+    if(f.wrong>0) out.push(S.practice ? (f.label||k) : (k.split("x")[0]+sep+k.split("x")[1]));
   });
   return out;
 }
@@ -758,7 +1077,7 @@ function finish(){
     var f=S.facts[k];
     // "nailed" = got every attempt right, OR stumbled but locked it in by the end
     if(f.mastered || (f.wrong===0 && f.right>0)) mastered++;
-    else if(f.wrong>0){ var p=k.split("x"); practice.push(p[0]+" × "+p[1]); }
+    else if(f.wrong>0){ practice.push(S.practice ? (f.label||k) : (k.split("x")[0]+" × "+k.split("x")[1])); }
   });
   var acc = S.totalFirstTry ? Math.round(100*S.firstTryRight/S.totalFirstTry) : 0;
 
@@ -771,6 +1090,8 @@ function finish(){
   $("#stMastered").textContent=mastered;
   $("#stAcc").textContent=acc+"%";
   $("#stAnswered").textContent=S.answered;
+  $("#lblM").textContent = S.practice ? "problems solved" : "facts nailed";
+  $("#lblA").textContent = S.practice ? "problems done" : "questions climbed";
   var mm=Math.floor(mins), ss=Math.round((mins-mm)*60);
   if(ss===60){ mm++; ss=0; }
   $("#stTime").textContent=mm+":"+(ss<10?"0":"")+ss;
@@ -785,7 +1106,9 @@ function finish(){
   }
 
   $("#certName").textContent = S.name || "Champion";
-  $("#certLine").textContent = "reached the summit — "+mastered+" facts nailed, "+acc+"% first try";
+  $("#certLine").textContent = S.practice
+    ? "climbed the "+S.cfg.label+" multiplication trail — "+mastered+" solved, "+acc+"% first try"
+    : "conquered the "+S.cfg.label+" times tables — "+mastered+" facts nailed, "+acc+"% first try";
   $("#certDate").textContent = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
 
   say("You made it to the top! Look at that view. Proper legend.","good");
@@ -794,23 +1117,27 @@ function finish(){
 }
 
 /* ---------------- start screen wiring ---------------- */
-function selectLevel(l){
-  if(!LEVELS[l]) l=3;
-  selectedLevel=l;
-  document.querySelectorAll(".lvl").forEach(function(b){ b.classList.toggle("sel", +b.dataset.l===l); });
-  $("#lvlDesc").textContent=LEVELS[l].desc;
+function selectKey(k){
+  if(!PLAY[k]) k=DEFAULT_BAND;
+  selectedKey=k;
+  document.querySelectorAll(".lvl").forEach(function(x){ x.classList.toggle("sel", x.dataset.k===k); });
+  $("#lvlDesc").textContent=PLAY[k].desc;
 }
 
 function applySound(on){ Sfx.set(on); $("#soundBtn").textContent="Sound: "+(on?"on":"off"); }
 
 function init(){
   $("#nameInput").value = lsGet(LS.name,"") || "";
-  selectLevel(lsGet(LS.level,3));
+  selectKey(lsGet(LS.band, DEFAULT_BAND));
 
-  $("#levels").addEventListener("click", function(e){
-    var b=e.target.closest(".lvl"); if(b) selectLevel(+b.dataset.l);
-  });
+  function keyPick(e){ var b=e.target.closest(".lvl"); if(b) selectKey(b.dataset.k); }
+  $("#levels").addEventListener("click", keyPick);
+  $("#modes").addEventListener("click", keyPick);
   $("#startBtn").addEventListener("click", startGame);
+  Pad2.setup();
+  $("#scratchBtn").addEventListener("click", openSheet);
+  $("#sheetDone").addEventListener("click", closeSheet);
+  $("#howBtn").addEventListener("click", toggleHow);
   $("#ledgeBtn").addEventListener("click", function(){
     el.ledgePanel.classList.add("hidden");
     showPlayUI(true);
@@ -819,6 +1146,8 @@ function init(){
   $("#againBtn").addEventListener("click", function(){
     el.endPanel.classList.add("hidden");
     el.startPanel.classList.remove("hidden");
+    document.body.classList.remove("practice");
+    closeSheet();
     S=null;
   });
   $("#printBtn").addEventListener("click", function(){ window.print(); });
@@ -830,8 +1159,10 @@ function init(){
     if(soundOn){ Sfx.resume(); Sfx.correct(); }
   });
 
-  el.pad.addEventListener("click", function(e){
-    var b=e.target.closest(".key"); if(b) press(b.dataset.k);
+  el.pad.addEventListener("pointerdown", function(e){
+    var b=e.target.closest(".key"); if(!b) return;
+    e.preventDefault(); // crisper than click on touch; also blocks the trailing click
+    press(b.dataset.k);
   });
   el.hintBtn.addEventListener("click", function(){
     if(S && S.current) el.hintLine.textContent = hintFor(S.current.a, S.current.b);
@@ -840,6 +1171,7 @@ function init(){
     if(!el.startPanel.classList.contains("hidden")) return;
     if(!el.endPanel.classList.contains("hidden")) return;
     if(e.key>="0" && e.key<="9") press(e.key);
+    else if(e.key===".") press("dot");
     else if(e.key==="Enter") press("enter");
     else if(e.key==="Backspace"){
       if(S && S.typed){ S.typed=S.typed.slice(0,-1);
@@ -848,7 +1180,7 @@ function init(){
   });
 
   showPlayUI(false);
-  say("G'day! Pick a difficulty and hit start. I'll be your guide up the tree.");
+  say("G'day! Pick which times tables to work on and hit start. I'll be your guide up the tree.");
 }
 
 init();
