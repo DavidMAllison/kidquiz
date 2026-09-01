@@ -31,9 +31,17 @@
   }
 
   .topbar{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-  .brand{display:flex; align-items:baseline; gap:7px; font-weight:800;}
+  .brand{display:flex; align-items:center; gap:7px; font-weight:800;}
   .brand .k{color:var(--deep); letter-spacing:.5px;}
   .brand .t{color:var(--muted); font-size:12px; font-weight:700;}
+  .gamesel{
+    font-family:inherit; font-weight:800; font-size:12.5px; color:var(--muted);
+    background:transparent; border:0; cursor:pointer; max-width:190px;
+    -webkit-appearance:none; appearance:none; padding:2px 15px 2px 4px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M1 3l4 4 4-4' stroke='%235c7488' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 1px center;
+  }
+  .gamesel:focus-visible{outline:2px solid var(--deep); outline-offset:2px; border-radius:4px;}
   .iconbtn{
     border:0; background:rgba(255,255,255,.75); color:var(--ink);
     font-family:inherit; font-weight:700; font-size:13px;
@@ -271,7 +279,7 @@
 <div id="app">
 
   <div class="topbar">
-    <div class="brand"><span class="k">KEANU</span><span class="t">Deep Dive</span></div>
+    <div class="brand"><span class="k">KEANU GAMES</span><select id="gameSel" class="gamesel" aria-label="Switch game"></select></div>
     <button class="iconbtn" id="soundBtn" type="button">Sound: on</button>
   </div>
 
@@ -1264,6 +1272,44 @@ function init(){
 }
 
 init();
+})();
+</script>
+
+<script>
+/* game switcher — identical in every game under games/. Add a game: add one line to GAMES. */
+(function(){
+  var GAMES = [
+    ["times-table-trek", "Times Table Trek"],
+    ["deep-dive", "Deep Dive"]
+  ];
+  var sel = document.getElementById("gameSel");
+  if(!sel) return;
+  var here = (location.pathname.replace(/\/(index\.html)?$/, "").match(/([^\/]+)$/) || [])[1] || "";
+  GAMES.forEach(function(g){
+    var o = document.createElement("option");
+    o.value = g[0]; o.textContent = g[1];
+    if(g[0] === here) o.selected = true;
+    sel.appendChild(o);
+  });
+  // native <select> sizes to its widest option; shrink it to the current label so
+  // the caret sits right after the text
+  function fitWidth(){
+    var opt = sel.options[sel.selectedIndex]; if(!opt) return;
+    var cs = getComputedStyle(sel);
+    var m = document.createElement("span");
+    m.style.cssText = "position:absolute;visibility:hidden;white-space:pre;font-family:" +
+      cs.fontFamily + ";font-size:" + cs.fontSize + ";font-weight:" + cs.fontWeight +
+      ";letter-spacing:" + cs.letterSpacing;
+    m.textContent = opt.textContent;
+    document.body.appendChild(m);
+    sel.style.width = Math.ceil(m.getBoundingClientRect().width) + 22 + "px";
+    m.remove();
+  }
+  fitWidth();
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitWidth);
+  sel.addEventListener("change", function(){
+    if(sel.value && sel.value !== here) location.href = "../" + sel.value + "/";
+  });
 })();
 </script>
 </body>
