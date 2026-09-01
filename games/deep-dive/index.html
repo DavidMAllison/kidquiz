@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a6ebd">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a6ebd'/%3E%3Cpath d='M0 40 Q25 30 50 40 T100 40 V45 Q75 55 50 45 T0 45 Z' fill='%23bfe6ff'/%3E%3Cellipse cx='50' cy='66' rx='22' ry='14' fill='%23fff'/%3E%3Ccircle cx='50' cy='66' r='7' fill='%23ffc043'/%3E%3Crect x='47' y='45' width='6' height='9' fill='%23fff'/%3E%3C/svg%3E">
+<title>Keanu's Deep Dive</title>
+<style>
+  :root{
+    --deep:#0a6ebd; --abyss:#063a63;
+    --aqua:#37c5c0; --sun:#ffc043; --coral:#ff6b6b;
+    --sea1:#bfe6ff; --sea2:#eaf7ff;
+    --ink:#12283a; --muted:#5c7488; --card:#ffffff;
+    --good:#12996b; --bad:#d8443f;
+    --pad:#e9f3fb;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; min-height:100%;}
+  body{
+    font-family:"Baloo 2", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg, var(--sea1) 0%, var(--sea2) 45%, #eef1f4 100%);
+    -webkit-font-smoothing:antialiased;
+    touch-action:manipulation;
+  }
+  #app{
+    max-width:520px; margin:0 auto; padding:14px 14px 30px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+  .brand{display:flex; align-items:baseline; gap:7px; font-weight:800;}
+  .brand .k{color:var(--deep); letter-spacing:.5px;}
+  .brand .t{color:var(--muted); font-size:12px; font-weight:700;}
+  .iconbtn{
+    border:0; background:rgba(255,255,255,.75); color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:13px;
+    padding:7px 12px; border-radius:999px; cursor:pointer;
+  }
+  .iconbtn:active{transform:translateY(1px);}
+
+  .trail-wrap{
+    background:linear-gradient(180deg,#d3ecff,#eaf6ff);
+    border-radius:18px; padding:8px 10px 4px;
+    box-shadow:0 4px 14px rgba(20,80,140,.12); position:relative;
+  }
+  .trail-wrap svg{display:block; width:100%; height:auto;}
+  .altlabel{
+    position:absolute; right:14px; top:10px; font-size:12px; font-weight:800;
+    color:#fff; background:rgba(6,58,99,.72);
+    padding:2px 8px; border-radius:999px;
+  }
+  #sub{transition:transform .55s cubic-bezier(.34,1.2,.5,1);}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
+  #sub .hull{animation:bob 1.8s ease-in-out infinite;}
+
+  .keanu{display:flex; gap:10px; align-items:flex-start; height:92px;}
+  .keanu .avatar{
+    flex:0 0 auto; width:52px; height:52px; border-radius:50%;
+    background:#cfd6de; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 8px rgba(20,80,140,.18); overflow:hidden;
+  }
+  .keanu .avatar svg{width:46px; height:46px;}
+  .bubble{
+    position:relative; background:var(--card); border-radius:16px;
+    padding:11px 14px; box-shadow:0 4px 14px rgba(20,80,140,.12);
+    font-size:15.5px; line-height:1.35; font-weight:600; flex:1;
+    height:100%; display:flex; align-items:flex-start;
+    overflow-y:auto; scrollbar-width:none;
+  }
+  .bubble::-webkit-scrollbar{display:none;}
+  .bubble::before{
+    content:""; position:absolute; left:-8px; top:16px;
+    border:8px solid transparent; border-right-color:var(--card); border-left:0;
+  }
+  .bubble.good{color:var(--good);}
+  .bubble.bad{color:var(--bad);}
+
+  .statusrow{display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:13px; font-weight:800; color:var(--muted); min-height:18px;}
+  .pips{display:flex; gap:5px; flex-wrap:wrap; justify-content:center; flex:1;}
+  .pip{width:9px; height:9px; border-radius:50%; background:#cfdae4;}
+  .pip.on{background:var(--sun);}
+  .streak{color:var(--coral); text-align:right; min-width:64px;}
+  .streak.hot{color:var(--deep);}
+
+  .card{
+    background:var(--card); border-radius:20px; padding:20px 18px;
+    box-shadow:0 8px 24px rgba(20,80,140,.14); text-align:center;
+  }
+  .q{
+    font-size:21px; font-weight:700; line-height:1.35; min-height:52px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+  }
+  .q.big{font-size:40px; font-weight:800; letter-spacing:1px;}
+  .answerbox{
+    margin:14px auto 0; min-width:120px; min-height:56px; padding:6px 16px;
+    border-radius:14px; border:3px dashed #c4dcec; background:var(--pad);
+    font-size:36px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; color:var(--abyss);
+  }
+  .answerbox.filled{border-style:solid;}
+  .answerbox.good{border-color:var(--good); color:var(--good); background:#e9f8f0;}
+  .answerbox.bad{border-color:var(--bad); color:var(--bad); background:#fdeceb;}
+  .answerbox.hidden{display:none;}
+  .hintline{margin-top:12px; font-size:14px; font-weight:600; color:var(--abyss);
+    min-height:36px;}
+  .hintbtn{
+    margin-top:8px; border:0; background:var(--pad); color:var(--abyss);
+    font-family:inherit; font-weight:800; font-size:13px; padding:7px 14px;
+    border-radius:999px; cursor:pointer;
+  }
+
+  #inputArea{display:flex; flex-direction:column; gap:10px;}
+
+  .pad{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  .key{
+    border:0; background:var(--card); color:var(--ink);
+    font-family:inherit; font-weight:800; font-size:26px; padding:15px 0;
+    border-radius:16px; cursor:pointer; touch-action:none;
+    box-shadow:0 4px 0 #cfe0ec, 0 6px 14px rgba(20,80,140,.10);
+    transition:transform .05s, box-shadow .05s;
+  }
+  .key:active{transform:translateY(3px); box-shadow:0 1px 0 #cfe0ec;}
+  .key.enter{background:var(--deep); color:#fff; box-shadow:0 4px 0 var(--abyss), 0 6px 14px rgba(10,110,189,.3); grid-column:1 / -1;}
+  .key.enter:active{box-shadow:0 1px 0 var(--abyss);}
+  .key.clear{background:#fff0f1; color:var(--coral); box-shadow:0 4px 0 #f3d3d7;}
+  .key.neg{background:#eef7ff; color:var(--deep); box-shadow:0 4px 0 #cfe0ec;}
+  .key.dot{display:none;}
+  .pad.withdot .key.dot{display:block;}
+  .pad.withdot .key.neg{display:none;}
+
+  #choices{display:grid; gap:9px;}
+  .choice{
+    border:2px solid #d7e6f0; background:#fff; color:var(--abyss);
+    font-family:inherit; font-weight:800; font-size:24px; padding:18px 8px;
+    border-radius:16px; cursor:pointer;
+    box-shadow:0 4px 12px rgba(20,80,140,.08);
+  }
+  .choice:active{transform:translateY(2px);}
+  .choice.right{border-color:var(--good); background:#e9f8f0; color:var(--good);}
+  .choice.wrong{border-color:var(--bad); background:#fdeceb; color:var(--bad);}
+
+  #gauge{align-items:center; justify-content:center; gap:14px; padding:4px 0 2px;}
+  #gaugeTrack{
+    position:relative; width:64px; height:210px; border-radius:13px; flex:0 0 auto;
+    background:linear-gradient(180deg,#cdebff 0%, #6bb6de 42%, #14669c 100%);
+    border:2px solid #b6d6e8; touch-action:none; overscroll-behavior:contain;
+  }
+  #gaugeTrack .wl{
+    position:absolute; left:-5px; right:-5px; height:0;
+    border-top:2px dashed #063a63;
+  }
+  #diver{
+    position:absolute; left:50%; width:36px; height:20px;
+    margin-left:-18px; margin-top:-10px;
+    background:var(--sun); border:2px solid var(--abyss); border-radius:11px/9px;
+    transition:top .1s ease;
+  }
+  #diver::after{
+    content:""; position:absolute; left:13px; top:-7px; width:10px; height:8px;
+    background:var(--abyss); border-radius:3px 3px 0 0;
+  }
+  #ghost{
+    position:absolute; left:50%; width:48px; margin-left:-24px; height:0;
+    border-top:3px solid var(--good); display:none;
+  }
+  #ghost::after{
+    content:"here"; position:absolute; right:-3px; top:-15px;
+    font-size:11px; font-weight:800; color:var(--good);
+  }
+  #gaugeTicks{position:relative; width:52px; height:210px; flex:0 0 auto;}
+  #gaugeTicks .tick{position:absolute; left:0; width:100%; height:0; border-top:1px solid #c3d4e0;}
+  #gaugeTicks .tick.zero{border-top:2px solid var(--deep);}
+  #gaugeTicks .tick span{position:absolute; left:7px; top:-9px; font-size:11px; font-weight:800; color:var(--muted);}
+  #gaugeTicks .tick.zero span{color:var(--deep);}
+
+  #placeRow{align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card); border-radius:16px; padding:10px 12px;
+    box-shadow:0 4px 12px rgba(20,80,140,.08);}
+  #gaugeRead{font-weight:800; font-size:15px; color:var(--abyss);}
+  #placeGo{
+    border:0; background:var(--deep); color:#fff; font-family:inherit;
+    font-weight:800; font-size:16px; padding:11px 20px; border-radius:13px;
+    cursor:pointer; box-shadow:0 4px 0 var(--abyss);
+  }
+  #placeGo:active{transform:translateY(3px); box-shadow:0 1px 0 var(--abyss);}
+
+  /* which input widget is live */
+  #choices,#gauge,#placeRow{display:none;}
+  body.kchoice #pad{display:none;}
+  body.kchoice #choices{display:grid;}
+  body.kplace #pad{display:none;}
+  body.kplace #gauge{display:flex;}
+  body.kplace #placeRow{display:flex;}
+
+  .panel{
+    background:var(--card); border-radius:22px; padding:22px 20px;
+    box-shadow:0 10px 30px rgba(20,80,140,.16); text-align:center;
+  }
+  .panel h1{font-size:25px; margin:.1em 0; color:var(--deep);}
+  .panel h2{font-size:20px; margin:.2em 0; color:var(--deep);}
+  .panel p{font-size:15px; color:var(--muted); font-weight:600; margin:.5em 0;}
+  .field{margin:14px 0 4px; text-align:left;}
+  .field label{display:block; font-size:13px; font-weight:800; color:var(--muted); margin-bottom:6px;}
+  .field input[type=text]{
+    width:100%; font-family:inherit; font-size:17px; font-weight:700;
+    padding:11px 13px; border-radius:12px; border:2px solid #dce7ef; background:#f8fbfe; color:var(--ink);
+  }
+  .levels{display:grid; grid-template-columns:repeat(3,1fr); gap:7px;}
+  .lvl{
+    border:2px solid #dce7ef; background:#f8fbfe; border-radius:12px; padding:10px 0;
+    font-weight:800; font-size:16px; cursor:pointer; color:var(--muted);
+  }
+  .lvl.sel{border-color:var(--deep); background:var(--pad); color:var(--abyss);}
+  .lvldesc{font-size:12.5px; color:var(--muted); font-weight:600; margin-top:8px; min-height:30px;}
+  .bigbtn{
+    margin-top:16px; width:100%; border:0; background:var(--deep); color:#fff;
+    font-family:inherit; font-weight:800; font-size:19px; padding:15px 0;
+    border-radius:16px; cursor:pointer; box-shadow:0 5px 0 var(--abyss);
+  }
+  .bigbtn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--abyss);}
+  .ghostbtn{
+    margin-top:10px; width:100%; border:2px solid #dce7ef; background:#fff; color:var(--muted);
+    font-family:inherit; font-weight:800; font-size:15px; padding:11px 0; border-radius:14px; cursor:pointer;
+  }
+
+  .stars{font-size:32px; letter-spacing:5px; color:var(--sun); margin:6px 0; word-break:break-all;}
+  .stars .off{color:#dce7ef;}
+  .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 4px;}
+  .stat{background:var(--pad); border-radius:14px; padding:10px 8px;}
+  .stat b{display:block; font-size:22px; color:var(--abyss);}
+  .stat span{font-size:12px; font-weight:700; color:var(--muted);}
+  .practice{
+    text-align:left; margin-top:12px; font-size:14px; font-weight:700; color:var(--ink);
+    background:#eef8ff; border:1px solid #cfe6f5; border-radius:12px; padding:10px 12px;
+  }
+  .practice ul{margin:6px 0 0; padding-left:18px;}
+
+  #cert{
+    margin-top:14px; border:3px double var(--deep); border-radius:14px;
+    padding:16px 14px; background:linear-gradient(180deg,#fff,#f5fbff);
+  }
+  #cert .ct{font-size:12px; letter-spacing:3px; font-weight:800; color:var(--muted);}
+  #cert .cn{font-size:22px; font-weight:800; color:var(--deep); margin:4px 0;}
+  #cert .cl{font-size:13px; font-weight:700; color:var(--ink);}
+  #cert .cd{font-size:12px; color:var(--muted); margin-top:6px;}
+
+  .hidden{display:none !important;}
+  #confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50;}
+
+  @media (max-width:380px){
+    .q.big{font-size:34px;} .answerbox{font-size:30px;} .key{font-size:23px; padding:13px 0;}
+    .choice{font-size:21px;}
+  }
+  @media print{
+    body{background:#fff;}
+    #app > *{display:none !important;}
+    #endPanel{display:block !important; box-shadow:none;}
+    #endPanel > *:not(#cert){display:none !important;}
+    #cert{display:block !important; border-color:#333;}
+  }
+</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="k">KEANU</span><span class="t">Deep Dive</span></div>
+    <button class="iconbtn" id="soundBtn" type="button">Sound: on</button>
+  </div>
+
+  <div class="trail-wrap" id="trailWrap">
+    <div class="altlabel" id="depthLabel">0 m</div>
+    <svg viewBox="0 0 320 110" aria-hidden="true">
+      <defs>
+        <linearGradient id="og" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#cdebff"/><stop offset="1" stop-color="#083b63"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="320" height="24" fill="#e2f2ff"/>
+      <circle cx="28" cy="12" r="8" fill="#ffd76a"/>
+      <path d="M44 9 q4 -4 8 0 q4 -4 8 0" stroke="#9fb8c6" stroke-width="1.6" fill="none"/>
+      <rect x="0" y="24" width="320" height="86" fill="url(#og)"/>
+      <line x1="0" y1="24" x2="320" y2="24" stroke="#0a6ebd" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <path d="M244 110 L252 99 L260 107 L270 95 L280 108 L290 98 L320 110 Z" fill="#0b3f63"/>
+      <path d="M296 110 L296 90 Q305 82 310 92 L320 86 L320 110 Z" fill="#06304e"/>
+      <g id="sub" transform="translate(6,26)">
+        <g class="hull">
+          <ellipse cx="0" cy="0" rx="11" ry="6" fill="#ffd24a" stroke="#06304e" stroke-width="1.5"/>
+          <rect x="-3" y="-10" width="6" height="5" rx="1.5" fill="#ffd24a" stroke="#06304e" stroke-width="1.2"/>
+          <circle cx="3" cy="0" r="2.3" fill="#cdebff" stroke="#06304e" stroke-width="1"/>
+          <path d="M-11 0 l-5 -3 l0 6 z" fill="#f2b53a" stroke="#06304e" stroke-width="1"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="keanu">
+    <div class="avatar" aria-hidden="true">
+      <svg viewBox="0 0 64 64">
+        <circle cx="15" cy="20" r="10" fill="#9aa4ad"/>
+        <circle cx="49" cy="20" r="10" fill="#9aa4ad"/>
+        <circle cx="15" cy="20" r="5" fill="#e9c9d1"/>
+        <circle cx="49" cy="20" r="5" fill="#e9c9d1"/>
+        <ellipse cx="32" cy="35" rx="20" ry="18" fill="#b7c0c7"/>
+        <circle cx="24" cy="33" r="3.1" fill="#26292e"/>
+        <circle cx="40" cy="33" r="3.1" fill="#26292e"/>
+        <ellipse cx="32" cy="43" rx="7" ry="5.2" fill="#4b5157"/>
+      </svg>
+    </div>
+    <div class="bubble" id="bubble" aria-live="polite">Loading…</div>
+  </div>
+
+  <div class="statusrow" id="statusRow">
+    <span id="stageLabel">&nbsp;</span>
+    <span class="pips" id="pips"></span>
+    <span class="streak" id="streak">&nbsp;</span>
+  </div>
+
+  <div class="card" id="questionCard">
+    <div class="q" id="qExpr">&nbsp;</div>
+    <div class="answerbox" id="answerBox">&nbsp;</div>
+    <div class="hintline" id="hintLine">&nbsp;</div>
+    <button class="hintbtn" id="hintBtn" type="button">Show a hint</button>
+  </div>
+
+  <div id="inputArea">
+    <div id="choices"></div>
+
+    <div id="gauge">
+      <div id="gaugeTrack">
+        <div class="wl" id="waterLine"></div>
+        <div id="ghost"></div>
+        <div id="diver"></div>
+      </div>
+      <div id="gaugeTicks"></div>
+    </div>
+
+    <div id="placeRow">
+      <span id="gaugeRead">Drag the sub</span>
+      <button id="placeGo" type="button">Dive here</button>
+    </div>
+
+    <div class="pad" id="pad">
+      <button class="key" data-k="1">1</button>
+      <button class="key" data-k="2">2</button>
+      <button class="key" data-k="3">3</button>
+      <button class="key" data-k="4">4</button>
+      <button class="key" data-k="5">5</button>
+      <button class="key" data-k="6">6</button>
+      <button class="key" data-k="7">7</button>
+      <button class="key" data-k="8">8</button>
+      <button class="key" data-k="9">9</button>
+      <button class="key neg" data-k="neg">&#177;</button>
+      <button class="key dot" data-k="dot">.</button>
+      <button class="key" data-k="0">0</button>
+      <button class="key clear" data-k="clear">&#10005;</button>
+      <button class="key enter" data-k="enter">Go</button>
+    </div>
+  </div>
+
+  <div class="panel" id="startPanel">
+    <h1>Keanu's Deep Dive</h1>
+    <p>G'day! I'm Keanu. Today we dive below the waves, where the numbers go negative &mdash; opposites, absolute value, comparing and the number line. Grab your gear.</p>
+    <div class="field">
+      <label for="nameInput">Your first name (just for Keanu &mdash; stays on this device)</label>
+      <input type="text" id="nameInput" autocomplete="off" spellcheck="false" maxlength="16" placeholder="optional">
+    </div>
+    <div class="field">
+      <label>Dive plan</label>
+      <div class="levels" id="levels">
+        <button class="lvl" data-k="shallow" type="button">Shallow</button>
+        <button class="lvl" data-k="deep" type="button">Deep</button>
+        <button class="lvl" data-k="trench" type="button">Trench</button>
+      </div>
+      <div class="lvldesc" id="lvlDesc"></div>
+    </div>
+    <button class="bigbtn" id="startBtn" type="button">Drop in</button>
+  </div>
+
+  <div class="panel hidden" id="ledgePanel">
+    <h2 id="ledgeTitle">Dive cleared!</h2>
+    <div class="stars" id="ledgeStars"></div>
+    <p id="ledgeMsg"></p>
+    <button class="bigbtn" id="ledgeBtn" type="button">Keep diving</button>
+  </div>
+
+  <div class="panel hidden" id="endPanel">
+    <h1 id="endTitle">Trench floor!</h1>
+    <div class="stars" id="endStars"></div>
+    <p id="endMsg"></p>
+    <div class="statgrid">
+      <div class="stat"><b id="stMastered">0</b><span>skills clean</span></div>
+      <div class="stat"><b id="stAcc">0%</b><span>first-try accuracy</span></div>
+      <div class="stat"><b id="stAnswered">0</b><span>questions dived</span></div>
+      <div class="stat"><b id="stTime">0:00</b><span>time under</span></div>
+    </div>
+    <div class="practice hidden" id="practiceBox">
+      <span>Keanu says keep practising these:</span>
+      <ul id="practiceList"></ul>
+    </div>
+    <div id="cert">
+      <div class="ct">KEANU'S DEEP DIVE</div>
+      <div class="cn" id="certName">Champion</div>
+      <div class="cl" id="certLine">reached the trench floor</div>
+      <div class="cd" id="certDate"></div>
+    </div>
+    <button class="bigbtn" id="againBtn" type="button">Dive again</button>
+    <button class="ghostbtn" id="printBtn" type="button">Print certificate</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(s){ return document.querySelector(s); };
+
+/* ---------------- config ---------------- */
+var TYPES = ["context","opposite","abs","compare","order","placement"];
+var LABELS = {
+  context:"Word problems", opposite:"Opposites", abs:"Absolute value",
+  compare:"Comparing", order:"Ordering", placement:"Number line"
+};
+var LEVELS = {
+  shallow:{label:"Shallow", lvl:"shallow",
+    desc:"Integers only — opposites, absolute value, comparing and the number line."},
+  deep:{label:"Deep", lvl:"deep",
+    desc:"Integers plus fractions and decimals — the full 6th-grade mix."},
+  trench:{label:"Trench", lvl:"trench",
+    desc:"Two-step word problems, ordering four values, the trickier comparisons."}
+};
+var DEFAULT_LEVEL = "deep";
+var ORDER = ["shallow","deep","trench"];
+var GAUGE = {
+  shallow:{hi:10, lo:-10, snap:1, minor:1, label:5},
+  deep:{hi:10, lo:-12, snap:0.5, minor:1, label:4},
+  trench:{hi:8, lo:-20, snap:0.5, minor:2, label:4}
+};
+var PACE = {warmup:8, ledge:5, summitCap:6, autoHint:true};
+
+var NAMES = ["Priya","Sam","Mia","Theo","Ravi","Nina","Leo","Ada","Jonah","Kira"];
+var FRACS = [[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5]];
+
+var PRAISE = ["Beauty!","Nice one!","You ripper!","Too easy!","Spot on, mate!",
+              "Cracking!","Deeper we go!","Solid.","Yes! Keep finning.","Good as gold."];
+var STREAKMSG = {3:"Three straight — you're cruising!",5:"Five in a row! Absolute legend.",
+              8:"Eight clean — unreal.",12:"Twelve straight?! Keanu's speechless."};
+var WRONG = ["Not quite — have a squiz.","Close! Picture the number line.",
+             "No worries, let's work it through.","Almost. Here's the trick."];
+var LS = {name:"dd.name", level:"dd.level", sound:"dd.sound", hist:"dd.hist"};
+
+/* ---------------- storage ---------------- */
+function lsGet(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+/* ---------------- sound ---------------- */
+var Sfx = (function(){
+  var ctx=null, on=true;
+  function ac(){ if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ ctx=null; } } return ctx; }
+  function tone(freq,start,dur,type,vol){
+    var a=ac(); if(!a) return;
+    var o=a.createOscillator(), g=a.createGain();
+    o.type=type||"sine"; o.frequency.value=freq; o.connect(g); g.connect(a.destination);
+    var t=a.currentTime+start;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.18,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t); o.stop(t+dur+0.02);
+  }
+  return {
+    set:function(v){ on=v; },
+    resume:function(){ var a=ac(); if(a&&a.state==="suspended") a.resume(); },
+    correct:function(){ if(!on) return; tone(620,0,.12,"triangle"); tone(830,.09,.14,"triangle"); },
+    wrong:function(){ if(!on) return; tone(220,0,.18,"sine",.14); },
+    type:function(){ if(!on) return; tone(480,0,.04,"square",.05); },
+    ledge:function(){ if(!on) return; [523,659,784,1046].forEach(function(f,i){ tone(f,i*.09,.16,"triangle"); }); },
+    win:function(){ if(!on) return; [523,659,784,1046,1318].forEach(function(f,i){ tone(f,i*.12,.28,"triangle",.2); }); }
+  };
+})();
+
+/* ---------------- confetti ---------------- */
+var Confetti = (function(){
+  var cv=$("#confetti"), cx=cv.getContext("2d"), parts=[], raf=0, dpr=1;
+  var COLORS=["#0a6ebd","#37c5c0","#ffc043","#ff6b6b","#7ec8ff","#12996b"];
+  function resize(){ dpr=Math.min(window.devicePixelRatio||1,2); cv.width=innerWidth*dpr; cv.height=innerHeight*dpr; }
+  resize(); addEventListener("resize",resize);
+  function frame(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    for(var i=parts.length-1;i>=0;i--){
+      var p=parts[i];
+      p.vy+=0.16; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr; p.life--;
+      cx.save(); cx.translate(p.x*dpr,p.y*dpr); cx.rotate(p.rot);
+      cx.fillStyle=p.c; cx.globalAlpha=Math.max(0,p.life/p.max);
+      cx.fillRect(-p.s*dpr,-p.s*dpr,p.s*2*dpr,p.s*2*dpr); cx.restore();
+      if(p.life<=0||p.y>innerHeight+40) parts.splice(i,1);
+    }
+    raf = parts.length ? requestAnimationFrame(frame) : 0;
+  }
+  return { burst:function(x,y,n){
+    n=n||70;
+    for(var i=0;i<n;i++){
+      var a=Math.random()*Math.PI*2, sp=2+Math.random()*7;
+      parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,rot:Math.random()*6,
+        vr:(Math.random()-.5)*.4,s:3+Math.random()*4,c:COLORS[(Math.random()*COLORS.length)|0],
+        life:60+Math.random()*40,max:100});
+    }
+    if(!raf) raf=requestAnimationFrame(frame);
+  }};
+})();
+
+/* ---------------- number helpers ---------------- */
+function ri(lo,hi){ return lo + Math.floor(Math.random()*(hi-lo+1)); }
+function pick(a){ return a[(Math.random()*a.length)|0]; }
+function shuffle(a){
+  for(var i=a.length-1;i>0;i--){ var j=(Math.random()*(i+1))|0; var t=a[i]; a[i]=a[j]; a[j]=t; }
+  return a;
+}
+function fmt(n){ var r=Math.round(n*1000)/1000; return String(r); }
+function neg(str){ return String(str).replace(/-/g,"−"); }        // minus glyph for display
+function signStr(n){ return n<0 ? "−"+fmt(-n) : fmt(n); }
+
+/* a comparable value: {val:Number, str:display} */
+function makeVal(lvl){
+  var kind = lvl==="shallow" ? "int"
+    : pick(lvl==="deep" ? ["int","int","dec","frac"] : ["int","dec","frac","frac"]);
+  var isNeg = Math.random() < 0.68;   // lean negative -- that's the point of the unit
+  var big = lvl==="trench" ? 20 : 10;
+  if(kind==="int"){
+    var m = ri(1, big);
+    return {val:isNeg?-m:m, str:(isNeg?"−":"")+m};
+  }
+  if(kind==="dec"){
+    var d = ri(2, lvl==="trench"?150:90) / 10;
+    return {val:isNeg?-d:d, str:(isNeg?"−":"")+fmt(d)};
+  }
+  var f = pick(FRACS), v = f[0]/f[1];
+  return {val:isNeg?-v:v, str:(isNeg?"−":"")+f[0]+"/"+f[1]};
+}
+function distinctVals(lvl, count){
+  var out=[], guard=0;
+  while(out.length<count && guard++<300){
+    var c=makeVal(lvl);
+    if(out.some(function(x){ return Math.abs(x.val-c.val) < 0.06; })) continue;
+    out.push(c);
+  }
+  while(out.length<count){ out.push({val:out.length+100, str:String(out.length+100)}); }
+  return out;
+}
+function extreme(vs, least){
+  return vs.reduce(function(a,b){ return (least ? b.val<a.val : b.val>a.val) ? b : a; });
+}
+
+/* ---------------- question generators ---------------- */
+function genContext(lvl){
+  var two = lvl==="trench" && Math.random()<0.5;
+  var kind = pick(["temp","elev","money","dive"]);
+  var prompt, ans, hint;
+  if(kind==="temp"){
+    var a=ri(-4,12);
+    if(two){
+      var d1=ri(3,10), d2=ri(3,10);
+      prompt="It was "+a+"°C at noon. It dropped "+d1+"°C by evening, then dropped "+d2+"°C more overnight. What was the overnight temperature? (°C)";
+      ans=a-d1-d2;
+    } else {
+      var drop=Math.random()<0.65, d=ri(4,16);
+      prompt="The temperature was "+a+"°C, then "+(drop?"dropped":"rose")+" "+d+"°C. What is it now? (°C)";
+      ans=drop?a-d:a+d;
+    }
+    hint="A thermometer is a vertical number line. Dropping means moving down, toward the negatives.";
+  } else if(kind==="elev"){
+    if(two){
+      var s=ri(-18,-4), r=ri(3,12), dd=ri(3,12);
+      prompt="Keanu's sub is at "+s+" m. It rises "+r+" m, then descends "+dd+" m. What is its depth now? (m)";
+      ans=s+r-dd;
+    } else if(Math.random()<0.5){
+      var m=ri(3,20);
+      prompt="A cave floor sits "+m+" m below sea level. Write its elevation as an integer. (m)";
+      ans=-m;
+    } else {
+      var m2=ri(3,20);
+      prompt="A cliff ledge is "+m2+" m above sea level. Write its elevation as an integer. (m)";
+      ans=m2;
+    }
+    hint="Below sea level is negative, above is positive, sea level is 0.";
+  } else if(kind==="money"){
+    if(Math.random()<0.5){
+      var owe=ri(5,25);
+      prompt=pick(NAMES)+" owes a friend $"+owe+". Write that balance as an integer. ($)";
+      ans=-owe;
+    } else {
+      var bal=ri(3,15), sp=ri(bal+3, bal+25);
+      prompt=pick(NAMES)+" has $"+bal+" saved and spends $"+sp+". What is the new balance? ($)";
+      ans=bal-sp;
+    }
+    hint="Money owed or overdrawn is negative. Spending moves the balance down the number line.";
+  } else {
+    if(two){
+      var st=ri(-16,-4), up=ri(3,10), dn=ri(3,12);
+      prompt="The sub starts at "+st+" m, rises "+up+" m, then dives "+dn+" m. What depth is it at? (m)";
+      ans=st+up-dn;
+    } else {
+      var dv=ri(4,20);
+      prompt="Keanu's sub leaves the surface and descends "+dv+" m. What is its depth as an integer? (m)";
+      ans=-dv;
+    }
+    hint="Down from the surface is negative. The surface is 0.";
+  }
+  return {type:"context", answerKind:"num", dp:0, prompt:prompt, ans:ans,
+          key:"ctx:"+prompt, hint:hint};
+}
+
+function genOpposite(lvl){
+  var big = lvl==="trench" ? 20 : 12;
+  var m = ri(2, big);
+  var form = pick(lvl==="shallow" ? ["A","A","B"] : ["A","B","C","C"]);
+  var prompt, ans;
+  if(form==="A"){
+    var isNeg = Math.random()<0.6;
+    prompt="What is the opposite of "+(isNeg?"−":"")+m+"?";
+    ans = isNeg ? m : -m;
+  } else if(form==="B"){
+    prompt="−("+m+") = ?";
+    ans = -m;
+  } else {
+    prompt="−(−"+m+") = ?";
+    ans = m;
+  }
+  return {type:"opposite", answerKind:"num", dp:0, prompt:prompt, ans:ans,
+    key:"opp:"+prompt,
+    hint:"The opposite of a number is the same distance from 0, on the other side. The opposite of the opposite is the number itself."};
+}
+
+function genAbs(lvl){
+  var big = lvl==="trench" ? 20 : 12;
+  var half = (lvl!=="shallow" && Math.random()<0.35) ? 0.5 : 0;
+  var m = ri(1, big) + half;
+  var isNeg = Math.random()<0.75;
+  var prompt = "| "+(isNeg?"−":"")+fmt(m)+" | = ?";
+  return {type:"abs", answerKind:"num", dp:half?1:0, prompt:prompt, ans:m,
+    key:"abs:"+(isNeg?"-":"")+m,
+    hint:"Absolute value is the distance from 0 on the number line — it is never negative."};
+}
+
+function genCompare(lvl){
+  var vs = distinctVals(lvl, 2);
+  var greater = Math.random()<0.5;
+  var correct = (greater ? vs[0].val>vs[1].val : vs[0].val<vs[1].val) ? vs[0] : vs[1];
+  return {type:"compare", answerKind:"choice",
+    prompt:"Which is "+(greater?"greater":"less")+"?",
+    choices: shuffle(vs.map(function(v){ return v.str; })),
+    ansStr: correct.str,
+    key:"cmp:"+(greater?"g":"l")+":"+vs.map(function(v){ return v.str; }).slice().sort().join("|"),
+    hint:"On the number line, greater is to the right (toward the surface); less is to the left (deeper down)."};
+}
+
+function genOrder(lvl){
+  var n = lvl==="trench" ? 4 : 3;
+  var vs = distinctVals(lvl, n);
+  var least = Math.random()<0.5;
+  var correct = extreme(vs, least);
+  return {type:"order", answerKind:"choice",
+    prompt:"Tap the "+(least?"least":"greatest")+" value",
+    choices: shuffle(vs.map(function(v){ return v.str; })),
+    ansStr: correct.str,
+    key:"ord:"+(least?"l":"g")+":"+vs.map(function(v){ return v.str; }).slice().sort().join("|"),
+    hint: least ? "Least means deepest — furthest below zero."
+                : "Greatest means highest — furthest above zero (least deep)."};
+}
+
+function genPlacement(lvl){
+  var g = GAUGE[lvl];
+  var t = ri(g.lo+1, g.hi-1);
+  if(lvl!=="shallow" && Math.random()<0.35){
+    t += (Math.random()<0.5 ? 0.5 : -0.5);
+    if(t <= g.lo) t += 1;
+    if(t >= g.hi) t -= 1;
+  }
+  return {type:"placement", answerKind:"place",
+    prompt:"Drag the sub to "+signStr(t)+" on the depth gauge.",
+    ans:t, range:{hi:g.hi, lo:g.lo}, snap:g.snap,
+    key:"pl:"+lvl+":"+t,
+    hint:"0 is the waterline. Count the ticks down from 0 — each small mark is "+g.minor+
+         (g.snap<1 ? "; the sub lands on halves." : ".")};
+}
+
+function gen(type, lvl){
+  if(type==="context") return genContext(lvl);
+  if(type==="opposite") return genOpposite(lvl);
+  if(type==="abs") return genAbs(lvl);
+  if(type==="compare") return genCompare(lvl);
+  if(type==="order") return genOrder(lvl);
+  return genPlacement(lvl);
+}
+
+/* ---------------- depth gauge widget ---------------- */
+var Gauge = (function(){
+  var track, diver, ghost, ticks, read;
+  var hi=10, lo=-10, snap=1, val=0, active=false, live=false, onCommit=null;
+  function setup(){
+    track=$("#gaugeTrack"); diver=$("#diver"); ghost=$("#ghost");
+    ticks=$("#gaugeTicks"); read=$("#gaugeRead");
+    track.addEventListener("pointerdown", down);
+    track.addEventListener("pointermove", move);
+    track.addEventListener("pointerup", up);
+    track.addEventListener("pointercancel", up);
+    track.addEventListener("pointerleave", up);
+  }
+  function pctFor(v){ return (hi - v) / (hi - lo) * 100; }
+  function yToVal(clientY){
+    var r=track.getBoundingClientRect();
+    var f=(clientY - r.top) / r.height;
+    f = Math.max(0, Math.min(1, f));
+    return hi - f*(hi-lo);
+  }
+  function draw(){
+    diver.style.top = pctFor(val) + "%";
+    read.textContent = live ? "Sub at " + signStr(val) : "Drag the sub";
+  }
+  function set(v, commit){
+    v = Math.max(lo, Math.min(hi, v));
+    if(commit) v = Math.round(v/snap) * snap;
+    val = v;
+    if(commit){ live = true; if(onCommit) onCommit(val); }
+    draw();
+  }
+  function down(e){
+    active=true; e.preventDefault();
+    try{ track.setPointerCapture(e.pointerId); }catch(x){}
+    set(yToVal(e.clientY), false);
+  }
+  function move(e){ if(!active) return; e.preventDefault(); set(yToVal(e.clientY), false); }
+  function up(){ if(!active) return; active=false; set(val, true); }
+  function renderTicks(g){
+    ticks.innerHTML="";
+    for(var v=Math.ceil(lo); v<=hi; v+=g.minor){
+      var t=document.createElement("div");
+      t.className="tick" + (v===0 ? " zero" : "");
+      t.style.top = pctFor(v) + "%";
+      if(v===0 || v % g.label === 0){
+        var s=document.createElement("span");
+        s.textContent = v===0 ? "0" : (v>0 ? "+"+v : "−"+(-v));
+        t.appendChild(s);
+      }
+      ticks.appendChild(t);
+    }
+  }
+  return {
+    setup:setup,
+    bind:function(fn){ onCommit=fn; },
+    config:function(range, snapV){
+      var g = null;
+      for(var k in GAUGE){ if(GAUGE[k].hi===range.hi && GAUGE[k].lo===range.lo){ g=GAUGE[k]; break; } }
+      g = g || {minor:1, label:5};
+      hi=range.hi; lo=range.lo; snap=snapV; val=0; live=false;
+      $("#waterLine").style.top = pctFor(0) + "%";
+      ghost.style.display="none";
+      renderTicks(g);
+      draw();
+    },
+    showGhost:function(v){ ghost.style.top = pctFor(v) + "%"; ghost.style.display="block"; },
+    value:function(){ return val; }
+  };
+})();
+
+/* ---------------- game state ---------------- */
+var S=null, selectedKey=DEFAULT_LEVEL;
+var el={
+  bubble:$("#bubble"), sub:$("#sub"), depth:$("#depthLabel"),
+  stage:$("#stageLabel"), pips:$("#pips"), streak:$("#streak"),
+  card:$("#questionCard"), qExpr:$("#qExpr"), abox:$("#answerBox"),
+  hintLine:$("#hintLine"), hintBtn:$("#hintBtn"), pad:$("#pad"),
+  inputArea:$("#inputArea"),
+  startPanel:$("#startPanel"), ledgePanel:$("#ledgePanel"), endPanel:$("#endPanel"),
+  statusRow:$("#statusRow")
+};
+
+function say(text, mood){
+  el.bubble.textContent=text;
+  el.bubble.className="bubble"+(mood?" "+mood:"");
+}
+function showPlayUI(show){
+  [el.card, el.inputArea, el.statusRow].forEach(function(n){ n.classList.toggle("hidden", !show); });
+}
+function starHTML(n,max){
+  var s="";
+  for(var i=0;i<max;i++) s += (i<n) ? "★" : '<span class="off">★</span>';
+  return s;
+}
+
+function showInput(kind){
+  document.body.classList.toggle("kchoice", kind==="choice");
+  document.body.classList.toggle("kplace", kind==="place");
+  el.abox.classList.toggle("hidden", kind!=="num");
+  el.pad.classList.toggle("withdot", kind==="num" && S.current.dp>0);
+}
+
+function renderChoices(c){
+  var box=$("#choices");
+  box.innerHTML="";
+  box.style.gridTemplateColumns = c.choices.length>=4 ? "1fr 1fr" : "repeat("+c.choices.length+",1fr)";
+  c.choices.forEach(function(str){
+    var b=document.createElement("button");
+    b.className="choice"; b.type="button"; b.textContent=str;
+    b.addEventListener("click", function(){ chooseChoice(str, b); });
+    box.appendChild(b);
+  });
+}
+
+/* ---------------- start ---------------- */
+function startGame(){
+  Sfx.resume();
+  var name = $("#nameInput").value.trim().replace(/[^A-Za-z' -]/g,"").slice(0,16);
+  var key = LEVELS[selectedKey] ? selectedKey : DEFAULT_LEVEL;
+  lsSet(LS.name, name);
+  lsSet(LS.level, key);
+
+  var lvl = LEVELS[key].lvl;
+  var hist = lsGet(LS.hist, {}) || {};
+
+  var warm = [];
+  TYPES.forEach(function(t){ warm.push(gen(t, lvl)); });
+  while(warm.length < PACE.warmup) warm.push(gen(pick(TYPES), lvl));
+  shuffle(warm);
+
+  var rounds = [
+    {type:"warmup", label:"Systems check", qs:warm},
+    {type:"ledge",  label:"Dive 1 of 2", qs:null, hard:false},
+    {type:"ledge",  label:"Dive 2 of 2", qs:null, hard:true},
+    {type:"summit", label:"The trench", qs:[]}
+  ];
+
+  var planned = warm.length + PACE.ledge*2 + PACE.summitCap;
+
+  S = {
+    name:name, level:key, lvl:lvl, rounds:rounds, ri:0,
+    hist:hist, types:{}, missed:[],
+    queue:[], servedInRound:0,
+    answered:0, planned:planned,
+    firstTryRight:0, totalFirstTry:0,
+    streak:0, bestStreak:0,
+    stars:0, maxStars:0, ledgeMiss:0,
+    current:null, typed:"", placed:null, pickBtn:null,
+    awaitingFix:false, accepting:false,
+    startedAt:Date.now(), stage:"play"
+  };
+
+  document.body.classList.remove("kchoice","kplace");
+  el.startPanel.classList.add("hidden");
+  el.ledgePanel.classList.add("hidden");
+  el.endPanel.classList.add("hidden");
+  showPlayUI(true);
+  say("Righto"+(name?", "+name:"")+" — quick systems check first so I know what to work on. In we go!");
+  setTimeout(beginRound, 950);
+}
+
+function round(){ return S.rounds[S.ri]; }
+function trec(t){
+  if(!S.types[t]) S.types[t]={seen:0, right:0, wrong:0, streak:0, mastered:false};
+  return S.types[t];
+}
+
+function typeWeights(){
+  var w={};
+  TYPES.forEach(function(t){
+    var s = S.types[t] || {seen:0, wrong:0, mastered:false};
+    var h = S.hist[t] || {c:0, w:0};
+    w[t] = 1 + s.wrong*3 + (s.seen>0 && !s.mastered ? 1 : 0) + h.w*1.5 + (h.c===0 ? 0.5 : 0);
+  });
+  return w;
+}
+function weightedType(w){
+  var tot=0; TYPES.forEach(function(t){ tot+=w[t]; });
+  var x=Math.random()*tot;
+  for(var i=0;i<TYPES.length;i++){ x-=w[TYPES[i]]; if(x<=0) return TYPES[i]; }
+  return TYPES[TYPES.length-1];
+}
+
+function fillLedge(r){
+  var gl = r.hard ? ORDER[Math.min(ORDER.indexOf(S.lvl)+1, 2)] : S.lvl;
+  var w = typeWeights();
+  var qs=[];
+  for(var i=0;i<PACE.ledge;i++) qs.push(gen(weightedType(w), gl));
+  r.qs = qs;
+}
+
+function beginRound(){
+  var r = round();
+  el.stage.textContent = r.label;
+  if(r.qs==null && r.type==="ledge") fillLedge(r);
+  S.queue = r.qs.slice();
+  S.servedInRound = 0;
+  S.ledgeMiss = 0;
+  if(r.type==="ledge" || r.type==="summit") S.maxStars += 3;
+
+  if(r.type==="warmup") say("Systems check — just do your best. No stars here, I'm only reading the gauges.");
+  else if(r.type==="ledge") say(r.label+". Steady does it — three stars for a clean dive.");
+  else say("The trench. These are the ones that got you earlier — let's settle 'em.");
+
+  renderPips();
+  setTimeout(nextQuestion, 850);
+}
+
+function nextQuestion(){
+  if(!S.queue.length) return endRound();
+  var q = S.queue.shift();
+  S.servedInRound++;
+  S.current = q;
+  S.typed = ""; S.placed = null; S.awaitingFix = false; S.pickBtn = null;
+  trec(q.type);
+
+  el.qExpr.className = "q" + ((q.type==="opposite" || q.type==="abs") ? " big" : "");
+  el.qExpr.textContent = q.prompt;
+  el.abox.textContent = " "; el.abox.className = "answerbox";
+  el.hintLine.textContent = PACE.autoHint ? q.hint : " ";
+
+  showInput(q.answerKind);
+  if(q.answerKind==="choice") renderChoices(q);
+  else if(q.answerKind==="place") Gauge.config(q.range, q.snap);
+
+  setPad(true);
+  renderProgress();
+}
+
+function setPad(on){ if(S) S.accepting = on; }
+
+function renderPips(){
+  var r=round();
+  el.pips.innerHTML="";
+  if(r.type==="warmup") return;
+  var total=Math.max(r.qs.length,1);
+  var done=Math.min(S.servedInRound, total);
+  for(var i=0;i<total;i++){
+    var d=document.createElement("span");
+    d.className="pip"+(i<done?" on":"");
+    el.pips.appendChild(d);
+  }
+}
+
+function renderProgress(){
+  var pct=Math.max(0, Math.min(1, S.answered/S.planned));
+  var x=6 + pct*280, y=26 + pct*66;
+  el.sub.setAttribute("transform","translate("+x.toFixed(1)+","+y.toFixed(1)+")");
+  el.depth.textContent = Math.round(pct*60) + " m";
+  renderPips();
+  el.streak.textContent = S.streak>=3 ? ("streak "+S.streak) : " ";
+  el.streak.className = "streak"+(S.streak>=5?" hot":"");
+}
+
+/* ---------------- input ---------------- */
+function press(k){
+  if(!S || S.stage!=="play" || !S.current || !S.accepting) return;
+  var c=S.current;
+  if(c.answerKind!=="num") return;
+  if(k==="clear"){ S.typed=""; Sfx.type(); }
+  else if(k==="enter"){ return submit(); }
+  else if(k==="neg"){
+    S.typed = (S.typed.charAt(0)==="-") ? S.typed.slice(1) : ("-"+S.typed);
+    Sfx.type();
+  }
+  else if(k==="dot"){
+    if(!c.dp || S.typed.indexOf(".")>=0) return;
+    if(S.typed==="" || S.typed==="-") S.typed += "0.";
+    else S.typed += ".";
+    Sfx.type();
+  }
+  else {
+    if(S.typed.replace(/[-.]/g,"").length >= 3) return;
+    S.typed += k; Sfx.type();
+  }
+  renderAnswer();
+}
+function renderAnswer(){
+  var shown = (S.typed==="" ) ? " " : (S.typed==="-" ? "−" : neg(S.typed));
+  el.abox.textContent = shown;
+  el.abox.className = "answerbox" + ((S.typed && S.typed!=="-") ? " filled" : "");
+}
+
+function chooseChoice(str, btn){
+  if(!S || S.stage!=="play" || !S.accepting || !S.current || S.current.answerKind!=="choice") return;
+  S.typed = str; S.pickBtn = btn;
+  submit();
+}
+
+function isRight(c){
+  if(c.answerKind==="choice") return S.typed === c.ansStr;
+  if(c.answerKind==="place") return S.placed!=null && Math.abs(S.placed - c.ans) < 0.01;
+  var v = c.dp>0 ? parseFloat(S.typed) : parseInt(S.typed, 10);
+  if(isNaN(v)) return false;
+  return c.dp>0 ? Math.abs(v - c.ans) < 0.005 : v === c.ans;
+}
+function ansShow(c){
+  if(c.answerKind==="choice") return c.ansStr;
+  return signStr(c.ans);
+}
+function fixPrompt(c){
+  if(c.answerKind==="choice") return "Tap "+c.ansStr+" to keep diving.";
+  if(c.answerKind==="place") return "Drag the sub to "+signStr(c.ans)+".";
+  return "Type "+signStr(c.ans)+" to keep diving.";
+}
+
+function markResult(ok){
+  var c=S.current;
+  if(c.answerKind==="num"){
+    el.abox.textContent = ok ? ansShow(c) : neg(S.typed);
+    el.abox.className = "answerbox " + (ok ? "good" : "bad");
+  } else if(c.answerKind==="choice"){
+    $("#choices").querySelectorAll(".choice").forEach(function(b){
+      if(b.textContent===c.ansStr) b.classList.add("right");
+      else if(!ok && b===S.pickBtn) b.classList.add("wrong");
+    });
+  } else {
+    if(!ok) Gauge.showGhost(c.ans);
+  }
+}
+function clearChoiceMarks(){
+  $("#choices").querySelectorAll(".choice").forEach(function(b){ b.classList.remove("wrong"); });
+}
+function resetForRetry(c){
+  if(c.answerKind==="num"){ S.typed=""; el.abox.textContent=" "; el.abox.className="answerbox"; }
+  else if(c.answerKind==="choice"){ S.typed=""; clearChoiceMarks(); }
+  else { S.placed=null; }
+  setPad(true);
+}
+
+function submit(){
+  if(!S || S.stage!=="play" || !S.current) return;
+  var c=S.current, r=round();
+  if(c.answerKind==="num" && (S.typed==="" || S.typed==="-")) return;
+  if(c.answerKind==="choice" && !S.typed) return;
+  if(c.answerKind==="place" && S.placed==null){
+    el.hintLine.textContent="Drag the sub on the gauge first, then hit Dive here.";
+    return;
+  }
+  var right=isRight(c);
+  setPad(false);
+
+  if(S.awaitingFix){
+    if(right){
+      markResult(true);
+      say("There we go. Down we dive!","good"); Sfx.correct();
+      advance();
+    } else {
+      say("Not yet — it's "+ansShow(c)+". "+fixPrompt(c),"bad");
+      Sfx.wrong();
+      resetForRetry(c);
+    }
+    return;
+  }
+
+  var rec=trec(c.type);
+  rec.seen++; S.totalFirstTry++;
+  var h = S.hist[c.type] || {c:0, w:0};
+
+  if(right){
+    rec.right++; rec.streak++;
+    if(rec.streak>=2) rec.mastered=true;
+    h.c++; S.hist[c.type]=h; lsSet(LS.hist, S.hist);
+    S.firstTryRight++; S.streak++;
+    if(S.streak>S.bestStreak) S.bestStreak=S.streak;
+
+    markResult(true);
+    say(STREAKMSG[S.streak] || pick(PRAISE), "good");
+    Sfx.correct();
+    var b=el.card.getBoundingClientRect();
+    Confetti.burst(b.left+b.width/2, b.top+b.height*0.4, S.streak>=5 ? 110 : 60);
+    advance();
+  } else {
+    rec.wrong++; rec.streak=0; rec.mastered=false;
+    h.w++; S.hist[c.type]=h; lsSet(LS.hist, S.hist);
+    S.streak=0;
+    if(r.type==="ledge" || r.type==="summit") S.ledgeMiss++;
+    if(!S.missed.some(function(m){ return m.key===c.key; })) S.missed.push(c);
+
+    markResult(false);
+    say(pick(WRONG)+" "+c.hint, "bad");
+    el.hintLine.textContent = "Answer: " + ansShow(c);
+    Sfx.wrong();
+    S.awaitingFix=true;
+    resetForRetry(c);
+  }
+  renderProgress();
+}
+
+function advance(){
+  S.answered++;
+  renderProgress();
+  setTimeout(nextQuestion, 720);
+}
+
+/* ---------------- round transitions ---------------- */
+function endRound(){
+  var r=round();
+  setPad(false);
+  showPlayUI(false);
+
+  if(r.type==="warmup"){
+    S.ri++;
+    el.ledgePanel.classList.remove("hidden");
+    $("#ledgeTitle").textContent="Systems check done";
+    $("#ledgeStars").innerHTML="";
+    var weak=weakTypes();
+    $("#ledgeMsg").textContent = weak.length
+      ? "A couple to firm up: "+weak.slice(0,3).join(", ")+". Let's dive."
+      : "Gauges look sharp already. Let's dive and lock it in.";
+    $("#ledgeBtn").textContent="Start the dive";
+    return;
+  }
+
+  var stars = S.ledgeMiss===0 ? 3 : (S.ledgeMiss<=2 ? 2 : 1);
+  S.stars += stars;
+  Sfx.ledge();
+
+  if(r.type==="summit") return finish();
+
+  S.ri++;
+  if(round().type==="summit") buildSummit();
+
+  el.ledgePanel.classList.remove("hidden");
+  $("#ledgeTitle").textContent="Dive cleared!";
+  $("#ledgeStars").innerHTML=starHTML(stars,3);
+  $("#ledgeMsg").textContent = stars===3 ? "Perfect dive — three stars! You're gliding."
+    : (stars===2 ? "Two stars, tidy work. Keep the streak going next dive."
+                 : "Got there. That's what practice is for.");
+  $("#ledgeBtn").textContent = round().type==="summit" ? "Into the trench" : "Keep diving";
+}
+
+function buildSummit(){
+  var gl = ORDER[Math.min(ORDER.indexOf(S.lvl)+1, 2)];
+  var qs=[], seen={};
+  shuffle(S.missed.slice()).forEach(function(q){
+    if(qs.length>=PACE.summitCap || seen[q.key]) return;
+    seen[q.key]=1; qs.push(q);
+  });
+  var guard=0;
+  while(qs.length<4 && guard++<40){
+    var q=gen(weightedType(typeWeights()), gl);
+    if(seen[q.key]) continue;
+    seen[q.key]=1; qs.push(q);
+  }
+  shuffle(qs);
+  S.rounds[S.ri].qs = qs;
+  S.planned += qs.length - PACE.summitCap;
+}
+
+function weakTypes(){
+  var o=[];
+  Object.keys(S.types).forEach(function(t){ if(S.types[t].wrong>0) o.push(LABELS[t]); });
+  return o;
+}
+
+/* ---------------- finish ---------------- */
+function finish(){
+  S.stage="done";
+  Sfx.win();
+  var mins=(Date.now()-S.startedAt)/60000;
+  var clean=0;
+  Object.keys(S.types).forEach(function(t){
+    var f=S.types[t];
+    if(f.seen>0 && f.wrong===0) clean++;
+  });
+  var acc = S.totalFirstTry ? Math.round(100*S.firstTryRight/S.totalFirstTry) : 0;
+
+  el.endPanel.classList.remove("hidden");
+  $("#endTitle").textContent="You touched the trench floor!";
+  $("#endStars").innerHTML="★ <b>"+S.stars+"</b> / "+(S.maxStars||3);
+  $("#endMsg").textContent = acc>=90 ? "Cracking dive — barely a bubble out of place."
+    : (acc>=70 ? "Solid dive. A few more trips and these'll be automatic."
+               : "Big dive! Come back tomorrow and it'll feel easier — promise.");
+  $("#stMastered").textContent = clean;
+  $("#stAcc").textContent = acc+"%";
+  $("#stAnswered").textContent = S.answered;
+  var mm=Math.floor(mins), ss=Math.round((mins-mm)*60);
+  if(ss===60){ mm++; ss=0; }
+  $("#stTime").textContent = mm+":"+(ss<10?"0":"")+ss;
+
+  var pbox=$("#practiceBox"), weak=weakTypes();
+  if(weak.length){
+    var ul=$("#practiceList"); ul.innerHTML="";
+    weak.slice(0,6).forEach(function(t){ var li=document.createElement("li"); li.textContent=t; ul.appendChild(li); });
+    pbox.classList.remove("hidden");
+  } else {
+    pbox.classList.add("hidden");
+  }
+
+  $("#certName").textContent = S.name || "Champion";
+  $("#certLine").textContent = "dived the "+LEVELS[S.level].label+" trail — "+S.answered+" solved, "+acc+"% first try";
+  $("#certDate").textContent = new Date().toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"});
+
+  say("You touched the trench floor! Look at that — proper legend. Back to the surface we go.","good");
+  var burst=function(){ Confetti.burst(innerWidth*0.5, innerHeight*0.3, 140); };
+  burst(); setTimeout(burst,400); setTimeout(burst,850);
+}
+
+/* ---------------- start screen wiring ---------------- */
+function selectKey(k){
+  if(!LEVELS[k]) k=DEFAULT_LEVEL;
+  selectedKey=k;
+  document.querySelectorAll(".lvl").forEach(function(x){ x.classList.toggle("sel", x.dataset.k===k); });
+  $("#lvlDesc").textContent = LEVELS[k].desc;
+}
+function applySound(on){ Sfx.set(on); $("#soundBtn").textContent="Sound: "+(on?"on":"off"); }
+
+function init(){
+  $("#nameInput").value = lsGet(LS.name,"") || "";
+  selectKey(lsGet(LS.level, DEFAULT_LEVEL));
+
+  $("#levels").addEventListener("click", function(e){
+    var b=e.target.closest(".lvl"); if(b) selectKey(b.dataset.k);
+  });
+  $("#startBtn").addEventListener("click", startGame);
+  Gauge.setup();
+  Gauge.bind(function(v){ if(S) S.placed = v; });
+  $("#placeGo").addEventListener("click", submit);
+
+  $("#ledgeBtn").addEventListener("click", function(){
+    el.ledgePanel.classList.add("hidden");
+    showPlayUI(true);
+    beginRound();
+  });
+  $("#againBtn").addEventListener("click", function(){
+    el.endPanel.classList.add("hidden");
+    el.startPanel.classList.remove("hidden");
+    document.body.classList.remove("kchoice","kplace");
+    S=null;
+  });
+  $("#printBtn").addEventListener("click", function(){ window.print(); });
+
+  var soundOn = lsGet(LS.sound, true);
+  applySound(soundOn);
+  $("#soundBtn").addEventListener("click", function(){
+    soundOn=!soundOn; lsSet(LS.sound, soundOn); applySound(soundOn);
+    if(soundOn){ Sfx.resume(); Sfx.correct(); }
+  });
+
+  el.pad.addEventListener("pointerdown", function(e){
+    var b=e.target.closest(".key"); if(!b) return;
+    e.preventDefault();
+    press(b.dataset.k);
+  });
+  el.hintBtn.addEventListener("click", function(){
+    if(S && S.current) el.hintLine.textContent = S.current.hint;
+  });
+  document.addEventListener("keydown", function(e){
+    if(!el.startPanel.classList.contains("hidden")) return;
+    if(!el.endPanel.classList.contains("hidden")) return;
+    if(e.key>="0" && e.key<="9") press(e.key);
+    else if(e.key==="-" || e.key==="_") press("neg");
+    else if(e.key===".") press("dot");
+    else if(e.key==="Enter") press("enter");
+    else if(e.key==="Backspace"){
+      if(S && S.typed){ S.typed=S.typed.slice(0,-1); renderAnswer(); }
+    }
+  });
+
+  showPlayUI(false);
+  say("G'day! Pick a dive plan and drop in. I'll be your guide down the reef wall.");
+}
+
+init();
+})();
+</script>
+</body>
+</html>
